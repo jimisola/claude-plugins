@@ -14,6 +14,7 @@
     "./skills/rubberduck/",
     "./skills/make-ci-green-again/",
     "./skills/gsmp/",
-    "./skills/grill-me/"
+    "./skills/grill-me/",
+    "./skills/find-smells/"
   ]
 }

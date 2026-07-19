@@ -254,3 +254,4 @@ Replace only `- [ ] Ran \`/quality:full-pr-review\` and addressed findings` → 
 | `/quality:make-ci-green-again` | Watch and fix failing CI checks |
 | `/quality:preflight` | Mandatory pre-commit checks (plugin repos: validate + smoke-test; other projects: formatter + tests + build) |
 | `/quality:grill-me` | Stress-test a plan or design via relentless questioning |
+| `/quality:find-smells` | Find code smells repo-wide (surface-level to architectural) and plan a fix |
