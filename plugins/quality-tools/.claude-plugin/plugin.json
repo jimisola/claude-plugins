@@ -1,0 +1,19 @@
+{
+  "name": "quality",
+  "description": "Quality tools — PR review workflows, repo summaries, and problem-solving.",
+  "version": "1.0.0",
+  "author": {
+    "name": "jimisola"
+  },
+  "skills": [
+    "./skills/repo-summary/",
+    "./skills/create-pr/",
+    "./skills/act-on-pr/",
+    "./skills/preflight/",
+    "./skills/full-pr-review/",
+    "./skills/rubberduck/",
+    "./skills/make-ci-green-again/",
+    "./skills/gsmp/",
+    "./skills/grill-me/"
+  ]
+}

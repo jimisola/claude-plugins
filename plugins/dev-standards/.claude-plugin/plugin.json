@@ -1,0 +1,25 @@
+{
+  "name": "dev-standards",
+  "description": "Personal development standards — git workflow conventions.",
+  "version": "1.0.0",
+  "author": {
+    "name": "jimisola"
+  },
+  "skills": [
+    "./skills/git-workflow/"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/update-marketplaces.sh\"",
+            "timeout": 30,
+            "statusMessage": "Updating plugin marketplaces..."
+          }
+        ]
+      }
+    ]
+  }
+}

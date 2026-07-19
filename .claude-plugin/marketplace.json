@@ -1,0 +1,17 @@
+{
+  "name": "jimisola-plugins",
+  "description": "Personal Claude Code plugins — development standards and quality tools.",
+  "owner": {
+    "name": "jimisola"
+  },
+  "plugins": [
+    {
+      "name": "dev-standards",
+      "source": "./plugins/dev-standards"
+    },
+    {
+      "name": "quality",
+      "source": "./plugins/quality-tools"
+    }
+  ]
+}
