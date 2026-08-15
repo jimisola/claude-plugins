@@ -9,6 +9,8 @@ Requires Node 22.18+. Works the same on Windows, macOS, and Linux; no dependenci
 
 1. **Human checkpoint — mandatory.** View the file (Read it) and show/describe it to the user, then get their explicit confirmation before uploading. This skill runs agent-triggered, so this is the only human eyeball in the loop — the thing drag-and-drop gave for free. Never upload without it.
 
+   **Offer to open it in their viewer as part of asking.** Reading a file renders it for *you*, not necessarily for the user — a terminal may show nothing, and describing an image is not the same as them seeing it. Offer the open, and if they take it run the platform's opener in the background (`xdg-open` on Linux, `open` on macOS, `start` on Windows). Video especially: describing a clip is no substitute for watching it.
+
    As part of that check, confirm the content is safe to publish: **never upload anything containing sensitive data** — customer data, credentials or tokens, or internal system details visible in screenshots. Uploads land in GitHub-owned storage with no deletion mechanism; treat every upload as permanent and unrecoverable.
 
 2. Upload the file(s) — prints one markdown image line per file:
