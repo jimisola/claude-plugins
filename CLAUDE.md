@@ -19,9 +19,13 @@ claude-plugins/
 │   ├── dev-standards/                 # Personal development standards
 │   │   ├── .claude-plugin/plugin.json
 │   │   └── skills/                    # Auto-applied skills
-│   └── quality-tools/                 # Quality tools (plugin name: quality)
+│   ├── quality-tools/                 # Quality tools (plugin name: quality)
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/                    # Auto-applied + user-invocable skills
+│   └── github-tools/                  # GitHub tools
 │       ├── .claude-plugin/plugin.json
-│       └── skills/                    # Auto-applied + user-invocable skills
+│       ├── hooks/                     # PreToolUse enforcement for uploads
+│       └── skills/                    # Auto-applied skills
 ```
 
 ## Versioning
@@ -44,7 +48,7 @@ claude plugin validate .
    avoid picking up project-local config):
 
 ```bash
-cd /tmp && claude --plugin-dir /path/to/claude-plugins/plugins/dev-standards --plugin-dir /path/to/claude-plugins/plugins/quality-tools -p "list all available skills and commands from plugins"
+cd /tmp && claude --plugin-dir /path/to/claude-plugins/plugins/dev-standards --plugin-dir /path/to/claude-plugins/plugins/quality-tools --plugin-dir /path/to/claude-plugins/plugins/github-tools -p "list all available skills and commands from plugins"
 ```
 
 ## Editing Skills

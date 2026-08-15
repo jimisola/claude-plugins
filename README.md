@@ -1,6 +1,6 @@
 # Claude Plugins
 
-Personal Claude Code plugins — development standards and quality tools.
+Personal Claude Code plugins — development standards, quality tools, and GitHub tools.
 
 ## Plugins
 
