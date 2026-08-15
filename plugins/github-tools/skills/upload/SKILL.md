@@ -9,7 +9,7 @@ Requires Node 22.18+. Works the same on Windows, macOS, and Linux; no dependenci
 
 1. **Human checkpoint — mandatory.** View the file (Read it) and show/describe it to the user, then get their explicit confirmation before uploading. This skill runs agent-triggered, so this is the only human eyeball in the loop — the thing drag-and-drop gave for free. Never upload without it.
 
-   As part of that check, confirm the content's data classification: **never upload anything containing C3+ classified data** — customer data, credentials or tokens, or internal system details visible in screenshots. Uploads land in GitHub-owned storage with no deletion mechanism; treat every upload as permanent and unrecoverable.
+   As part of that check, confirm the content is safe to publish: **never upload anything containing sensitive data** — customer data, credentials or tokens, or internal system details visible in screenshots. Uploads land in GitHub-owned storage with no deletion mechanism; treat every upload as permanent and unrecoverable.
 
 2. Upload the file(s) — prints one markdown image line per file:
 
@@ -29,7 +29,7 @@ Requires Node 22.18+. Works the same on Windows, macOS, and Linux; no dependenci
 ## Constraints — read before promising anything
 
 - **Images and video only** (png/jpg/jpeg/gif/webp/mp4/webm). The endpoint rejects other types. The script also verifies the file's magic bytes match its extension — a renamed non-media file (`mv secrets.env secrets.png`) is refused, and the plugin's PreToolUse hook enforces the same check and logs every upload invocation to `~/.claude/github-tools-uploads.jsonl`. SVG is deliberately unsupported: no magic number to verify, and it's scriptable.
-- **Uploads are permanent.** Deleting or editing the referencing comment does not delete the asset and there is no documented deletion mechanism — hence the human checkpoint and classification rule above.
+- **Uploads are permanent.** Deleting or editing the referencing comment does not delete the asset and there is no documented deletion mechanism — hence the human checkpoint and sensitive-data rule above.
 - **github.com only.** The endpoint does not exist on GitHub Enterprise Server; the script refuses non-github.com remotes rather than failing confusingly.
 - **The endpoint is undocumented** and can change without notice. Fine for screenshots in PRs; don't build load-bearing automation on it without a fallback.
 - A bare `curl` of the returned URL gives **404 anonymously — that is normal**, not a failed upload. GitHub rewrites it into a short-lived signed image URL at render time, for logged-out viewers too. With the bearer token the URL returns 200, which is how to verify an upload landed.

@@ -58,29 +58,29 @@ token instead.
   - an org enforcing SAML SSO — the token will likely need explicit
     authorization for that org;
   - GitHub Enterprise Server — `uploads.github.com` is github.com-specific.
-- **Private-repo access control: verified for this tenant.** The signed-URL
+- **Private-repo access control: verified on one tenant.** The signed-URL
   rewrite is per-viewer, so access follows repo permissions. Verified
-  2026-08-12 against an asset referenced in a private repo under the Resurs
-  GitHub enterprise: an anonymous fetch of the bare asset URL is 302-redirected
-  to the Resurs enterprise SSO login with no image bytes served; an
+  2026-08-12 against an asset referenced in a private repo under a GitHub
+  enterprise: an anonymous fetch of the bare asset URL is 302-redirected
+  to the enterprise SSO login with no image bytes served; an
   **authenticated GitHub user outside the enterprise** (personal account,
   bearer token) gets the same SSO redirect and no bytes; a repo member with a
   bearer token gets 200. Caveat: this was tested on an enterprise (EMU) tenant
   where the SSO wall does the gating — behavior for private repos on plain
   github.com is still an assumption. Either way, deny-by-default held; but
-  still rely on the classification rule below rather than on repo privacy.
+  still rely on the sensitivity rule below rather than on repo privacy.
 
 ## Permanence — assume every upload is forever
 
 Deleting or editing the referencing comment or body does **not** delete the
 asset; the URL keeps resolving. There is no documented deletion mechanism for
 user-attachments — no API, no UI. The bytes live in GitHub-owned storage with
-no Resurs retention policy, deletion path, or audit trail, so GDPR erasure and
-internal retention rules cannot be honored for that copy.
+no retention policy, deletion path, or audit trail you control, so GDPR
+erasure and internal retention rules cannot be honored for that copy.
 
 Consequence: assume every upload is **permanent and unrecoverable**. Never
-upload anything that must not exist forever outside Resurs-controlled storage —
-in particular C3+ classified content (customer data, credentials, internal
+upload anything that must not exist forever outside storage you control —
+in particular sensitive content (customer data, credentials, internal
 system details visible in screenshots). This is why SKILL.md makes the human
 checkpoint mandatory.
 
