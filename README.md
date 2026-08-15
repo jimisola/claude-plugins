@@ -34,6 +34,14 @@ Quality tools — both auto-applied skills and user-invocable commands.
 | gsmp | `/quality:gsmp` | Switch to main branch and pull latest |
 | grill-me | `/quality:grill-me` | Stress-test a plan or design via relentless questioning |
 
+### github-tools
+
+GitHub tools built on undocumented-but-useful endpoints.
+
+| Skill | Auto-applies when... |
+|---|---|
+| `upload` | Attaching images or video to a GitHub PR or issue from the command line |
+
 ## Installation
 
 ### 1. Add the marketplace (one-time setup)
@@ -47,6 +55,7 @@ Quality tools — both auto-applied skills and user-invocable commands.
 ```
 /plugin install dev-standards@claude-plugins
 /plugin install quality@claude-plugins
+/plugin install github-tools@claude-plugins
 ```
 
 Or use the interactive UI: `/plugin` → **Discover** tab → select plugins and choose scope (user / project / local).
@@ -62,5 +71,5 @@ To refresh plugin listings after upstream changes:
 ## Local Testing
 
 ```bash
-claude --plugin-dir ./plugins/dev-standards --plugin-dir ./plugins/quality-tools
+claude --plugin-dir ./plugins/dev-standards --plugin-dir ./plugins/quality-tools --plugin-dir ./plugins/github-tools
 ```

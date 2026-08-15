@@ -12,6 +12,10 @@
     {
       "name": "quality",
       "source": "./plugins/quality-tools"
+    },
+    {
+      "name": "github-tools",
+      "source": "./plugins/github-tools"
     }
   ]
 }

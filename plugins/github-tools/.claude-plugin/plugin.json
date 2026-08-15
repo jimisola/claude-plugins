@@ -1,0 +1,11 @@
+{
+  "name": "github-tools",
+  "description": "GitHub tools — attach images and video to PRs and issues from the command line.",
+  "version": "1.0.0",
+  "author": {
+    "name": "jimisola"
+  },
+  "skills": [
+    "./skills/upload/"
+  ]
+}

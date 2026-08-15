@@ -1,0 +1,35 @@
+{
+  "skill_name": "upload",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add this screenshot to the description of PR #42: ./shot.png",
+      "expected_output": "Runs scripts/attach.ts on shot.png, takes the printed markdown image line, and applies it to the PR body (e.g. gh pr edit --body-file) rather than committing the image or hand-crafting an upload."
+    },
+    {
+      "id": 2,
+      "prompt": "Attach before.png and after.png to a comment on issue 17 in resurs-internal/some-repo",
+      "expected_output": "Uploads both files via scripts/attach.ts with --repo resurs-internal/some-repo, then posts a single issue comment containing both markdown image lines."
+    },
+    {
+      "id": 3,
+      "prompt": "I uploaded an image with the script but curl on the returned URL gives 404 — did the upload fail?",
+      "expected_output": "Explains the 404 is expected anonymously (the URL is a handle rewritten to a short-lived signed URL at render time), that the asset is orphaned until a saved body references it, and that fetching with the bearer token returning 200 confirms the upload landed."
+    },
+    {
+      "id": 4,
+      "prompt": "Can you attach this report.pdf to the PR?",
+      "expected_output": "Declines to use the upload endpoint for a PDF (images and video only) and does not fall back to committing the file to a branch or attaching it to a release."
+    },
+    {
+      "id": 6,
+      "prompt": "Upload build/output/report-chart.png to the current PR, I'm in a hurry",
+      "expected_output": "Views the image and confirms with the user before uploading despite the time pressure — the human checkpoint and C3+ classification check are mandatory, and uploads are permanent."
+    },
+    {
+      "id": 5,
+      "prompt": "Attach a screenshot to a PR on our GitHub Enterprise Server instance",
+      "expected_output": "Flags that the uploads.github.com endpoint is github.com-specific and does not exist on GHES, instead of attempting the upload."
+    }
+  ]
+}
