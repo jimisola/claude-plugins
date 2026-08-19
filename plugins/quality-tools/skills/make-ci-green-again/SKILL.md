@@ -1,7 +1,6 @@
 ---
 name: make-ci-green-again
-description: Watch CI checks on the current PR, analyze failures, fix them, and re-check until all checks pass.
-disable-model-invocation: true
+description: Watch CI checks on the current PR, analyze failures, fix them, and re-check until all checks pass. Use when the user asks to fix failing CI or get the build green.
 ---
 # Make CI Green Again
 

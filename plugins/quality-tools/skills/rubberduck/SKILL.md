@@ -1,7 +1,6 @@
 ---
 name: rubberduck
-description: Act as a Staff/Senior+ engineer thinking partner for product and technical problem solving — challenge assumptions, explore trade-offs, and produce an implementation plan.
-disable-model-invocation: true
+description: Act as a Staff/Senior+ engineer thinking partner for product and technical problem solving — challenge assumptions, explore trade-offs, and produce an implementation plan. Use when the user wants to think a design through or asks to rubber-duck a problem.
 ---
 # Rubber Duck: Product & Technical Problem Solving
 
