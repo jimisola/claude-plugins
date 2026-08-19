@@ -1,7 +1,6 @@
 ---
 name: find-smells
-description: Find code smells — from surface-level issues to deeper architectural ones — and make a plan to fix them.
-disable-model-invocation: true
+description: Find code smells — from surface-level issues to deeper architectural ones — and make a plan to fix them. Use when the user asks what could be cleaned up, refactored, or improved in the code.
 ---
 # Find Code Smells
 

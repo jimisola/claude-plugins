@@ -1,7 +1,6 @@
 ---
 name: full-pr-review
-description: Run parallel quality checks on a PR, deduplicate findings, present a consolidated summary, then ask the user how to proceed.
-disable-model-invocation: true
+description: Run parallel quality checks on a PR, deduplicate findings, present a consolidated summary, then ask the user how to proceed. Use when the user asks for a full, thorough, or complete review of a pull request.
 ---
 # Full PR Review
 

@@ -1,7 +1,6 @@
 ---
 name: act-on-pr
-description: Fetch PR review comments, analyze each one, present a summary, let the user choose what to fix, apply fixes, and reply to all comments.
-disable-model-invocation: true
+description: Fetch PR review comments, analyze each one, present a summary, let the user choose what to fix, apply fixes, and reply to all comments. Use when the user wants to act on, address, or respond to review feedback on a pull request.
 ---
 # Act on PR
 

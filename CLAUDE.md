@@ -18,14 +18,14 @@ claude-plugins/
 ├── plugins/
 │   ├── dev-standards/                 # Personal development standards
 │   │   ├── .claude-plugin/plugin.json
-│   │   └── skills/                    # Auto-applied skills
+│   │   └── skills/                    # Skills (auto-applied + user-invocable)
 │   ├── quality-tools/                 # Quality tools (plugin name: quality)
 │   │   ├── .claude-plugin/plugin.json
-│   │   └── skills/                    # Auto-applied + user-invocable skills
+│   │   └── skills/                    # Skills (auto-applied + user-invocable)
 │   └── github-tools/                  # GitHub tools
 │       ├── .claude-plugin/plugin.json
 │       ├── hooks/                     # PreToolUse enforcement for uploads
-│       └── skills/                    # Auto-applied skills
+│       └── skills/                    # Skills (auto-applied + user-invocable)
 ```
 
 ## Versioning
@@ -98,8 +98,14 @@ Reference files should map to sections of any corresponding standards
 document where those sections have enough depth to warrant a file. Trivial
 sections (a single rule or a short table) can stay inline in SKILL.md.
 
-## User-Invocable Skills
+## Skill Invocation
 
-- User-invocable skills use `disable-model-invocation: true` in frontmatter — Claude never triggers them automatically
-- Invoked as `/quality:skill-name` or `/dev-standards:skill-name`
-- Update cross-references in `full-pr-review` skill when adding/removing user-invocable skills
+- Every skill is both model-invocable and user-invocable. Claude auto-applies it
+  when the `description` matches, and the user can always invoke it explicitly as
+  `/quality:skill-name` or `/dev-standards:skill-name`.
+- Do not add `disable-model-invocation: true`. A skill that only ever fires on an
+  explicit request is expressed through its `description` — state the trigger
+  ("Use when the user asks to ...") rather than blocking auto-invocation outright.
+- Because `description` is the only thing gating auto-application, every skill
+  description must name its trigger conditions, not just what the skill does.
+- Update cross-references in the `full-pr-review` skill when adding or removing skills

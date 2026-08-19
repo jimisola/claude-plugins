@@ -14,25 +14,21 @@ Personal development standards that auto-apply based on context.
 
 ### quality
 
-Quality tools — both auto-applied skills and user-invocable commands.
+Quality tools. Every skill auto-applies when its description matches, and can also
+be invoked explicitly with the slash command shown below.
 
-**Skills (auto-applied):**
-
-| Skill | Auto-applies when... |
-|---|---|
-| `repo-summary` | User asks for repo summary, recent activity, or executive summary |
-
-#### Commands
-
-| Command | Invocation | Purpose |
+| Skill | Invocation | Auto-applies when... |
 |---|---|---|
-| preflight | `/quality:preflight` | Mandatory pre-commit checks — validates plugin structure + smoke-tests install (plugin repos), or runs formatter + tests + build (other projects) |
-| full-pr-review | `/quality:full-pr-review` | Parallel quality checks on PR — built-in `/review`, `/code-review`, `/security-review` plus inlined cruft check |
-| act-on-pr | `/quality:act-on-pr` | Analyze & address PR review comments |
-| make-ci-green-again | `/quality:make-ci-green-again` | Watch CI, fix failures, re-check until green |
-| rubberduck | `/quality:rubberduck` | Staff/Senior-level thinking partner for problem-solving |
-| gsmp | `/quality:gsmp` | Switch to main branch and pull latest |
-| grill-me | `/quality:grill-me` | Stress-test a plan or design via relentless questioning |
+| `preflight` | `/quality:preflight` | About to commit or push, or asked for pre-commit checks — validates plugin structure + smoke-tests install (plugin repos), or runs formatter + tests + build (other projects) |
+| `create-pr` | `/quality:create-pr` | Creating or updating a PR, or posting the post-deployment comment on a linked issue |
+| `full-pr-review` | `/quality:full-pr-review` | Asked for a full or thorough review of a PR — built-in `/review`, `/code-review`, `/security-review` plus inlined cruft check |
+| `act-on-pr` | `/quality:act-on-pr` | Asked to act on or address PR review feedback |
+| `make-ci-green-again` | `/quality:make-ci-green-again` | Asked to fix failing CI or get the build green |
+| `find-smells` | `/quality:find-smells` | Asked what could be cleaned up, refactored, or improved |
+| `rubberduck` | `/quality:rubberduck` | Thinking a design through, or asked to rubber-duck a problem |
+| `repo-summary` | `/quality:repo-summary` | Asked for a repo summary, recent activity, or what has shipped |
+| `gsmp` | `/quality:gsmp` | Asked to go back to main, or to sync main with the remote |
+| `grill-me` | `/quality:grill-me` | Asked to stress-test a plan or design |
 
 ### github-tools
 

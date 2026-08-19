@@ -1,7 +1,6 @@
 ---
 name: repo-summary
-description: Generate an executive summary of recent repository activity — commits, merged PRs, and contributors grouped by workspace.
-disable-model-invocation: true
+description: Generate an executive summary of recent repository activity — commits, merged PRs, and contributors grouped by workspace. Use when the user asks for a repo summary, recent activity, or what has been shipped.
 ---
 
 # Repo Summary

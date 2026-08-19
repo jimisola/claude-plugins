@@ -2,8 +2,6 @@
 name: create-pr
 description: Create or update a GitHub PR using a standard PR template — fills in What & Why, Author checklist, and Test Plan. Also posts or updates the post-deployment comment on the linked issue, if any.
 ---
-> **Note:** `disable-model-invocation` is intentionally absent. The `git-workflow` skill instructs the model to invoke `/quality:create-pr` after pushing — setting `disable-model-invocation: true` would block that invocation and cause fallback to bare `gh pr create`, which `git-workflow` explicitly forbids.
-
 # Create PR
 
 Create or update a GitHub PR using the standard template, or post/update the post-deployment comment on the linked issue.

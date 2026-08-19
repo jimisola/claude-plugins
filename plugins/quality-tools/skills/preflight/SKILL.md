@@ -1,7 +1,6 @@
 ---
 name: preflight
-description: Run all mandatory checks before committing or pushing. Detects project type automatically — plugin marketplace repos run validate + install test; other projects run formatter, tests, and build.
-disable-model-invocation: true
+description: Run all mandatory checks before committing or pushing. Detects project type automatically — plugin marketplace repos run validate + install test; other projects run formatter, tests, and build. Use before any commit or push, and when the user asks for pre-commit or pre-push checks.
 ---
 # Preflight
 
