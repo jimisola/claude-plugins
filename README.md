@@ -32,11 +32,12 @@ be invoked explicitly with the slash command shown below.
 
 ### github-tools
 
-GitHub tools built on undocumented-but-useful endpoints.
+GitHub tools for the parts of GitHub that have no comfortable CLI.
 
 | Skill | Auto-applies when... |
 |---|---|
 | `upload` | Attaching images or video to a GitHub PR or issue from the command line |
+| `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, and the first sync |
 
 ## Installation
 
