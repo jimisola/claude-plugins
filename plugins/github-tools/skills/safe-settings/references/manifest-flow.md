@@ -40,8 +40,8 @@ exists: generate a private key from its settings page by hand rather than creati
 ## After the redirect
 
 ```bash
-gh variable set SAFE_SETTINGS_APP_ID -R <org>/.github-private -b "$(jq -r .id app-conversion.json)"
-jq -r .pem app-conversion.json | gh secret set SAFE_SETTINGS_PRIVATE_KEY -R <org>/.github-private
+gh variable set SAFE_SETTINGS_APP_ID -R <org>/.github -b "$(jq -r .id app-conversion.json)"
+jq -r .pem app-conversion.json | gh secret set SAFE_SETTINGS_PRIVATE_KEY -R <org>/.github
 ```
 
 Installing is the one step with no API: open `<html_url>/installations/new` and choose
@@ -52,6 +52,10 @@ Verify the result rather than assuming it:
 ```bash
 gh api /orgs/<org>/installations --jq '.installations[] | {app_slug, repository_selection, permissions}'
 ```
+
+A secret cannot be read back, so if the admin repo ever moves, the key does not move with
+it: generate a fresh one from the App settings page and delete the old one afterwards. An
+App can hold several keys at once, so this never interrupts a running sync.
 
 Then **shred `app-conversion.json`**. It holds the PEM, the client secret and the webhook
 secret. It is regenerable; a leak is not recallable.

@@ -71,7 +71,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--org", required=True, help="GitHub organization login")
     p.add_argument("--name", help="App name (default: <org>-safe-settings)")
-    p.add_argument("--admin-repo", default=".github-private", help="repo holding safe-settings config")
+    p.add_argument("--admin-repo", default=".github", help="repo holding safe-settings config")
     p.add_argument("--homepage", help="App homepage URL (default: the admin repo)")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--out", default=".", help="directory for app-conversion.json")

@@ -1,26 +1,39 @@
 # The admin repo and the Actions workflow
 
-safe-settings reads its configuration from one repo in the org, conventionally
-`.github-private` (`ADMIN_REPO`). Nothing else in the org declares settings — a repo-local
+safe-settings reads its configuration from one repo in the org (`ADMIN_REPO`). Use the
+**public `.github` repo**. The obvious-looking alternative, a private `.github-private`,
+costs you the ability to protect the repo that defines the org's protection: repository
+rulesets need a public repo (or GitHub Pro), so a ruleset targeting a private admin repo
+answers `403` and fails the whole sync. Publishing the config gives nothing away —
+rulesets, labels and repo settings are already world-readable through the API on public
+repos — and Actions minutes are unmetered there. Nothing else in the org declares settings — a repo-local
 `.github/settings.yml` in the older `repository-settings/app` format is a *different* tool
 with a different schema, and keeping both is how an org ends up with two competing sources.
 
 ```
-.github-private/
+.github/
 ├── .github/workflows/safe-settings.yml
 └── safe-settings/
     ├── settings.yml            # org-wide repo defaults AND the label set
     ├── deployment-settings.yml # scope: which repos are excluded
-    └── suborgs/all.yml         # rulesets and environments
+    └── suborgs/
+        ├── product.yml         # the repos with real CI: rulesets, environments
+        └── meta.yml            # the repos without it: no required status checks
 ```
+
+Split the suborgs by *what CI a repo actually has*, not by what the repos are. A required
+status check that a repo never produces blocks every PR on it forever, so one ruleset
+covering both a product repo and a meta repo is not possible.
 
 ## What each file owns
 
 - **`settings.yml`** — the `repository:` block (merge strategy, squash title/message source,
   branch deletion, `security:` toggles) and `labels:`. Applied to every in-scope repo.
-- **`deployment-settings.yml`** — `restrictedRepos.exclude`. Exclude the admin repo, the
-  public `.github` repo, and **every archived repo** — archived repos are read-only and a
-  failed write there fails the entire run.
+- **`deployment-settings.yml`** — `restrictedRepos.exclude`. Exclude **every archived
+  repo**: they are read-only, and one failed write there fails the entire run, not just
+  that repo. An empty exclude list is load-bearing and worth a comment — safe-settings
+  restores its own defaults (`admin`, `.github`, `safe-settings`) when the file is
+  absent, so deleting the file silently unmanages the admin repo.
 - **`suborgs/all.yml`** — `rulesets:` and `environments:`. Rulesets belong here, not in
   `settings.yml`: a top-level `rulesets:` block is created as an *organization* ruleset,
   which requires GitHub Team. At suborg scope they are created per repo, which is free.
@@ -35,10 +48,11 @@ Checks out the admin repo and `github/safe-settings` at a pinned tag, `npm ci`, 
 | `GH_ORG` | the org login |
 | `APP_ID` | `${{ vars.SAFE_SETTINGS_APP_ID }}` |
 | `PRIVATE_KEY` | `${{ secrets.SAFE_SETTINGS_PRIVATE_KEY }}` |
-| `ADMIN_REPO` | `.github-private` |
+| `ADMIN_REPO` | `.github` |
 | `CONFIG_PATH` | `safe-settings` |
 | `DEPLOYMENT_CONFIG_FILE` | `${{ github.workspace }}/safe-settings/deployment-settings.yml` |
 | `FULL_SYNC_NOP` | `${{ inputs.nop && 'true' || 'false' }}` |
+| `LOG_LEVEL` | `debug` — without it a run says nothing about what it changed |
 
 Triggers: push to `main` limited to `safe-settings/**`, a weekly cron for drift correction,
 and `workflow_dispatch` with a boolean `nop` input.
