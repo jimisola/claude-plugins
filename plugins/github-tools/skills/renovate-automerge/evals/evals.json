@@ -1,0 +1,23 @@
+{
+  "skill_name": "renovate-automerge",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit jimisola/git-dyn-semver-gradle-plugin for the Renovate auto-merge setup we use on the other repos and tell me exactly what is missing before it is safe to turn platformAutomerge on there. Read-only — do not change anything.",
+      "expected_output": "A report built from the live API: rules in force on main (or none), the PR-triggered jobs and which are unfiltered, the check-runs with app ids from a real PR head, repo flags, Renovate config red flags, and an ordered list of what to do — ruleset with the complete required list first, the preset flip last. Must state the precondition and must not propose requiring path-filtered jobs, matrix jobs or renovate/stability-days.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Renovate hasn't opened a single PR on my fork jimisola/AI-Case-Sorter-Py in over a month even though it has a .github/renovate.json5 with forkProcessing enabled. The Mend portal shows it as disabled. What's going on and what do I change?",
+      "expected_output": "Identifies that the hosted app's fork gate reads only root renovate.json, so the .github/renovate.json5 is never consulted for a fork; proposes moving the config to root renovate.json (JSONC allowed), notes the cached disabled verdict needs a manual 'Run Renovate scan' in the Mend portal, and checks silent mode. Does not blame the config content or the App installation.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Our org's safe-settings config declares required checks for the repo but a Renovate patch PR just merged 20 seconds after it opened, before CI finished. Figure out why and fix it.",
+      "expected_output": "Reads the rules actually in force via /rules/branches/<default> rather than the ruleset listing; finds the ruleset matches nothing (empty include), the sync failed, or the required list is missing the CI job; fixes the declaration, syncs, and verifies as a set diff of (context, integration_id) pairs; explains that GitHub auto-merge waits for required checks only.",
+      "files": []
+    }
+  ]
+}

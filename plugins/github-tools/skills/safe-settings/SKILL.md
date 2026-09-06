@@ -97,9 +97,9 @@ merged.
   authored by Renovate), not with a bypass.
 - Renovate's `platformAutomerge: true` hands the merge to GitHub, which waits only for the
   checks the ruleset marks **required**. `false` makes Renovate merge it, waiting for the
-  branch to be green **outright**. On an org without a complete required-checks list —
-  and on any org where check names differ per repo — `false` is the safer default and
-  needs no per-repo knowledge.
+  branch to be green **outright** — but only on the hosted app's next visit, so green PRs
+  sit for hours. The `renovate-automerge` skill is the procedure for making every PR check
+  required and then flipping to `true`; do not flip before the required list is complete.
 - renovate-approve reacts to `pull_request` events, so it does not retroactively approve
   PRs that were already open when it was installed. Tick the `rebase-check` box in a
   PR body to make Renovate rebase, which fires the event.
