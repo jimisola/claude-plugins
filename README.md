@@ -38,6 +38,7 @@ GitHub tools for the parts of GitHub that have no comfortable CLI.
 |---|---|
 | `upload` | Attaching images or video to a GitHub PR or issue from the command line |
 | `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, and the first sync |
+| `renovate-automerge` | Bringing a repo or org onto gated Renovate auto-merge — required checks first, then `platformAutomerge: true`; audit script, checklist and the traps found rolling it out across five orgs |
 
 ## Installation
 
