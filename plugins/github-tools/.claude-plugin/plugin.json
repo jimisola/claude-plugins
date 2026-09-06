@@ -1,12 +1,13 @@
 {
   "name": "github-tools",
-  "description": "GitHub tools — attach images and video to PRs and issues from the command line, and onboard an org onto safe-settings.",
-  "version": "1.2.0",
+  "description": "GitHub tools — attach images and video to PRs and issues from the command line, and merge pull requests once they are genuinely ready.",
+  "version": "1.3.0",
   "author": {
     "name": "jimisola"
   },
   "skills": [
     "./skills/upload/",
-    "./skills/safe-settings/"
+    "./skills/safe-settings/",
+    "./skills/merge-ready/"
   ]
 }
