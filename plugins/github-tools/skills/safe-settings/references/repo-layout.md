@@ -108,3 +108,11 @@ A public admin repo has one property the private one did not: GitHub disables a
 scheduled workflow after 60 days without commits, silently. Renovate's own action-pin PRs
 normally keep the repo active; the check that matters is "did the daily sync run", where
 zero runs is the bad answer.
+
+## Bringing a repo under management in two steps
+
+A suborg file with **no `labels:` key** leaves that repo's labels alone entirely — the
+plugin only reconciles what is declared. So a repo can be brought under management for
+settings and rulesets first (no label churn, nothing deleted), and its full live label set
+declared later once it has been read back and verified as zero-create/zero-delete.
+Demonstrated on an admin repo whose nine stock labels survived the scope widening.
