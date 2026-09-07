@@ -118,7 +118,41 @@ gh api -i repos/O/R/vulnerability-alerts | head -1        # 204 = alerts on; PUT
 gh api repos/O/R/automated-security-fixes --jq .enabled   # Dependabot security PRs: false
 ```
 
-### Security updates: two paths, and the choice is per repo
+### Dependabot: alerts on, security updates off
+
+Dependabot has two separately-toggled things and only one of them competes with Renovate.
+**Alerts** are detection — the dependency graph plus GitHub's advisory database, surfacing
+"this repo depends on something vulnerable" in the Security tab and over the API.
+**Security updates** are remediation — a second bot opening PRs, which is the half that
+duplicates Renovate and makes the double-PR mess. Switching off detection to stop the PRs
+is the mistake worth guarding against, and the two names are similar enough that somebody
+eventually will.
+
+Alerts stay on, and the strongest reason is that it is a **silent-failure dependency**:
+Renovate's `vulnerabilityAlerts` handling reads the repo's alerts, so switching them off
+produces no warning — the preset still says `vulnerabilityAlerts: { enabled: true }` and is
+simply inert. Nothing goes red; Renovate just quietly stops treating anything as a security
+update. Same class as every other failure this skill exists to prevent.
+
+Beyond that:
+
+- **A security fix should not serve the soak period.** `minimumReleaseAge` holds routine
+  updates 3–7 days. A vulnerability fix waiting three days is the wrong trade, and the
+  alerts path is how Renovate tells those bumps apart from routine ones.
+- **The dependency graph reaches transitive dependencies** that no direct bump would
+  surface — a manager-driven update proposes bumps to what you declared.
+- **`osvVulnerabilityAlerts` adds a second, independent source.** Two feeds disagree
+  usefully; either alone has gaps.
+- **The Security tab answers "what is vulnerable right now, and since when"** directly.
+  Inferring that from which Renovate PRs happen to be open answers a different question
+  badly.
+
+The cost is nil with automated security fixes off: no PRs, just a Security tab entry and an
+API surface. The real counterargument is alert fatigue — alerts fire on transitive
+dependencies that may not be reachable in your code — which argues for triage discipline
+rather than for switching detection off.
+
+### Which feed, when: the coverage trade
 
 Renovate can source vulnerabilities two ways, and neither is free:
 

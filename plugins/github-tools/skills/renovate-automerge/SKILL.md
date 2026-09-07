@@ -37,10 +37,17 @@ later, 5 s *after* it: [references/evidence.md](references/evidence.md).
    install it); user-account repos are API-managed; private repos on the free plan cannot
    have rulesets at all, so they keep Renovate's own merge — `true` falls back harmlessly.
 5. **Repo flags**: `allow_auto_merge`, squash only, `delete_branch_on_merge`; every label
-   the config references exists; Dependabot *alerts* on (Renovate's security PRs read
-   that feed), Dependabot security updates off, no `dependabot.yml`.
+   the config references exists.
+6. **Dependabot: alerts ON, security updates OFF, no `dependabot.yml`.** These are two
+   separately-toggled things and only the second competes with Renovate — alerts are
+   *detection*, security updates are a second bot opening PRs. Turning off detection to
+   stop the PRs is the mistake to guard against, and the names are close enough that
+   someone eventually will.
 
-Full checklist with YAML: [references/target-setup.md](references/target-setup.md).
+Why alerts earn their place under a Renovate-owns-updates policy — including the
+silent-failure dependency that makes it load-bearing — is in
+[references/target-setup.md](references/target-setup.md), which also carries the full
+checklist with YAML.
 
 ## Workflow
 
