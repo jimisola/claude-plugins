@@ -25,6 +25,10 @@ repo's own config), or a per-repo config where the org has no preset:
     { matchUpdateTypes: ["patch"], addLabels: ["renovate-version-patch"], minimumReleaseAge: "3 days", automerge: true },
     { matchUpdateTypes: ["pin"],   addLabels: ["renovate-version-pin"],   automerge: true },   // a pin installs nothing new
     { matchUpdateTypes: ["digest"], addLabels: ["renovate-version-digest"] },
+    // lockFileMaintenance is its own updateType and matches NONE of the five above, so
+    // without a rule it gets no label and no automerge and queues for a human invisibly.
+    // It automerges here as a deliberate exception — see below; the soak was never available.
+    { matchUpdateTypes: ["lockFileMaintenance"], addLabels: ["renovate-version-lockfile"], automerge: true },
     // GitHub Actions: commit metadata only. The tier rules above decide automerge, so a
     // major action bump (input renames, node runtime changes) waits for a human like any major.
     { matchManagers: ["github-actions"], semanticCommitScope: "github-actions" },
@@ -42,6 +46,34 @@ repo's own config), or a per-repo config where the org has no preset:
 - The default `internalChecksFilter: strict` means a PR is only opened for a version
   already past `minimumReleaseAge` — so `renovate/stability-days` is never required.
 - Managers by their real names: `pip_requirements`, not `pip`.
+- **`lockFileMaintenance` is a sixth updateType**, and the choice about it is binary.
+  With only major/minor/patch/pin/digest rules its PRs carry no `renovate-version-*` label
+  and never automerge — they queue silently and cannot even be filtered for (found on five
+  repos across four orgs, oldest open a fortnight). And **`minimumReleaseAge` cannot apply
+  to it at all**: Renovate delegates the regeneration to the package manager and never sees
+  the individual transitive versions, so "label it and give it a patch-length soak" is not
+  an available option. Automerge with no soak, or do not automerge.
+
+  Whichever you pick, write the trade into the rule comment. With `rangeStrategy: "pin"`
+  every *declared* dependency is frozen, so a lockfile-maintenance PR is the only path by
+  which **transitive** dependencies ever change — simultaneously the only transitive-update
+  mechanism and the only control point over transitive supply chain. Automerging makes CI
+  the sole gate, which catches "broken" but not "compromised". Label-only keeps the control
+  point but has to come with a schedule and someone who actually triages, or the queue just
+  accumulates — which is the same silent failure in different clothes.
+
+  It only fires where a lockfile exists, so scope it before arguing about it: repos with no
+  lockfile never see one, and a preset rule there is inert.
+
+  **Two valid ways to write it, both documented.** Renovate's own automerge docs use the
+  object form (`lockFileMaintenance: { enabled: true, automerge: true }`); and
+  `lib/workers/repository/updates/flatten.ts` sets `updateType = 'lockFileMaintenance'`
+  and applies `packageRules`, so a `matchUpdateTypes: ["lockFileMaintenance"]` rule matches
+  too. The packageRule form keeps all six updateTypes in one visible block, which is what
+  makes the original omission harder to repeat; the object form is the docs example. Note
+  the merge order if you ever use both: packageRules are applied, the `lockFileMaintenance`
+  object is merged in, then packageRules are applied again — so the object wins on a key
+  both set. Pick one per config and say which in a comment.
 - Forks under an "All repositories" install: `forkProcessing: "enabled"` in **root
   `renovate.json`** (JSONC allowed: `//` comments, double-quoted keys, no trailing commas).
 
@@ -117,6 +149,59 @@ gh api repos/O/R --jq '{allow_auto_merge,allow_squash_merge,allow_merge_commit,a
 gh api -i repos/O/R/vulnerability-alerts | head -1        # 204 = alerts on; PUT to enable
 gh api repos/O/R/automated-security-fixes --jq .enabled   # Dependabot security PRs: false
 ```
+
+### Dependabot: alerts on, security updates off
+
+Dependabot has two separately-toggled things and only one of them competes with Renovate.
+**Alerts** are detection — the dependency graph plus GitHub's advisory database, surfacing
+"this repo depends on something vulnerable" in the Security tab and over the API.
+**Security updates** are remediation — a second bot opening PRs, which is the half that
+duplicates Renovate and makes the double-PR mess. Switching off detection to stop the PRs
+is the mistake worth guarding against, and the two names are similar enough that somebody
+eventually will.
+
+Alerts stay on, and the strongest reason is that it is a **silent-failure dependency**:
+Renovate's `vulnerabilityAlerts` handling reads the repo's alerts, so switching them off
+produces no warning — the preset still says `vulnerabilityAlerts: { enabled: true }` and is
+simply inert. Nothing goes red; Renovate just quietly stops treating anything as a security
+update. Same class as every other failure this skill exists to prevent.
+
+Beyond that:
+
+- **A security fix should not serve the soak period.** `minimumReleaseAge` holds routine
+  updates 3–7 days. A vulnerability fix waiting three days is the wrong trade, and the
+  alerts path is how Renovate tells those bumps apart from routine ones.
+- **The dependency graph reaches transitive dependencies** that no direct bump would
+  surface — a manager-driven update proposes bumps to what you declared.
+- **`osvVulnerabilityAlerts` adds a second, independent source.** Two feeds disagree
+  usefully; either alone has gaps.
+- **The Security tab answers "what is vulnerable right now, and since when"** directly.
+  Inferring that from which Renovate PRs happen to be open answers a different question
+  badly.
+
+The cost is nil with automated security fixes off: no PRs, just a Security tab entry and an
+API surface. The real counterargument is alert fatigue — alerts fire on transitive
+dependencies that may not be reachable in your code — which argues for triage discipline
+rather than for switching detection off.
+
+### Which feed, when: the coverage trade
+
+Renovate can source vulnerabilities two ways, and neither is free:
+
+- `vulnerabilityAlerts` reads GitHub's Dependabot alerts (`GET /repos/{o}/{r}/dependabot/alerts`).
+  Needs Dependabot *alerts* enabled — a Dependabot surface stays alive — but GitHub's advisory
+  database covers **GitHub Actions**, which the other path cannot reach.
+- `osvVulnerabilityAlerts` queries OSV directly, no Dependabot at all. But the datasource→OSV
+  mapping is a **closed list** (`lib/util/vulnerability/ecosystem.ts`): clojure, crate, go,
+  golang-version, hackage, hex, maven, npm, nuget, packagist, pypi, rubygems. Anything else —
+  `github-tags`, `github-releases`, any custom datasource — is skipped **silently**, with only a
+  trace log.
+
+So check the repo's actual datasources against that list before choosing. An npm/PyPI/Maven repo
+loses nothing by going OSV-only, which honours "Renovate, never Dependabot". A repo whose
+dependencies are mostly actions or a custom datasource gets almost nothing from OSV, and some
+surfaces (a vendor component registry, say) are covered by neither — say that plainly rather than
+letting a green config imply coverage.
 
 Labels the preset references (`bot-renovate`, `bot-renovate-stop`, `bot-renovate-rebase`,
 `renovate-version-*`, `renovate-type-*`, `security`) must exist; declare them in

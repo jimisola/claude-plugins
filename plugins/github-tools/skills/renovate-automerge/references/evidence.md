@@ -46,3 +46,11 @@ merged unattended.
 After removing a `{{groupId}}`-templated catch-all group, the next visit closed the
 grouped "update packages" PR and opened one PR per dependency. The same catch-all had
 also been overriding the named groups above it, so those had been dead config.
+
+## The gate declining to merge — the other direction
+
+Automerge working is only half the evidence. On a repo whose flip had already happened, a
+minor update (`zizmor` 1.30.0) sat **approved by the App, labelled minor, and unmerged**
+because one required check — `Lint workflows` — was failing. Under `platformAutomerge` with
+an incomplete required list that PR would have merged; with the complete list it did not.
+Same mechanism as the failures above, observed from the other side.

@@ -69,6 +69,11 @@ Grouped by where they bite. Each entry says what happens, why, and what to do in
   JSONC before the deprecated JSON5 fallback); pre-commit's `check-json` rejects it, so
   exclude the file in the same PR.
 - **`renovate/stability-days` appears on bot PRs only** and only as a commit status.
+- **Validation commands that write next to the source.** `npx json5 -c renovate.json5`
+  compiles to `renovate.json` *beside* it — and Renovate reads a file at that path as
+  config, so a stray one left in a repo silently becomes the config. Compile to a temp
+  path (`-o`), or check `git status` before committing. `renovate-config-validator <file>`
+  writes nothing and is the safer check.
 
 ## The hosted app (Mend)
 
