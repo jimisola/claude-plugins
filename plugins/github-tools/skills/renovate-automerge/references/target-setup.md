@@ -25,6 +25,10 @@ repo's own config), or a per-repo config where the org has no preset:
     { matchUpdateTypes: ["patch"], addLabels: ["renovate-version-patch"], minimumReleaseAge: "3 days", automerge: true },
     { matchUpdateTypes: ["pin"],   addLabels: ["renovate-version-pin"],   automerge: true },   // a pin installs nothing new
     { matchUpdateTypes: ["digest"], addLabels: ["renovate-version-digest"] },
+    // lockFileMaintenance is its own updateType and matches NONE of the five above, so
+    // without a rule it gets no label and no automerge and queues for a human invisibly.
+    // Decide it deliberately: automerge like a patch, or label it so the queue is filterable.
+    { matchUpdateTypes: ["lockFileMaintenance"], addLabels: ["renovate-version-lockfile"] },
     // GitHub Actions: commit metadata only. The tier rules above decide automerge, so a
     // major action bump (input renames, node runtime changes) waits for a human like any major.
     { matchManagers: ["github-actions"], semanticCommitScope: "github-actions" },
@@ -42,6 +46,12 @@ repo's own config), or a per-repo config where the org has no preset:
 - The default `internalChecksFilter: strict` means a PR is only opened for a version
   already past `minimumReleaseAge` — so `renovate/stability-days` is never required.
 - Managers by their real names: `pip_requirements`, not `pip`.
+- **`lockFileMaintenance` is a sixth updateType.** With `lockFileMaintenance: { enabled:
+  true }` and only major/minor/patch/pin/digest rules, its PRs carry no `renovate-version-*`
+  label and never automerge — they queue silently for a human and cannot even be filtered
+  for. Found on three repos with PRs open for two weeks. Whether a wholesale lockfile
+  refresh should automerge is a real question (bigger blast radius than one bump); the
+  point is to answer it rather than inherit the answer by omission.
 - Forks under an "All repositories" install: `forkProcessing: "enabled"` in **root
   `renovate.json`** (JSONC allowed: `//` comments, double-quoted keys, no trailing commas).
 
