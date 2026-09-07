@@ -118,6 +118,25 @@ gh api -i repos/O/R/vulnerability-alerts | head -1        # 204 = alerts on; PUT
 gh api repos/O/R/automated-security-fixes --jq .enabled   # Dependabot security PRs: false
 ```
 
+### Security updates: two paths, and the choice is per repo
+
+Renovate can source vulnerabilities two ways, and neither is free:
+
+- `vulnerabilityAlerts` reads GitHub's Dependabot alerts (`GET /repos/{o}/{r}/dependabot/alerts`).
+  Needs Dependabot *alerts* enabled — a Dependabot surface stays alive — but GitHub's advisory
+  database covers **GitHub Actions**, which the other path cannot reach.
+- `osvVulnerabilityAlerts` queries OSV directly, no Dependabot at all. But the datasource→OSV
+  mapping is a **closed list** (`lib/util/vulnerability/ecosystem.ts`): clojure, crate, go,
+  golang-version, hackage, hex, maven, npm, nuget, packagist, pypi, rubygems. Anything else —
+  `github-tags`, `github-releases`, any custom datasource — is skipped **silently**, with only a
+  trace log.
+
+So check the repo's actual datasources against that list before choosing. An npm/PyPI/Maven repo
+loses nothing by going OSV-only, which honours "Renovate, never Dependabot". A repo whose
+dependencies are mostly actions or a custom datasource gets almost nothing from OSV, and some
+surfaces (a vendor component registry, say) are covered by neither — say that plainly rather than
+letting a green config imply coverage.
+
 Labels the preset references (`bot-renovate`, `bot-renovate-stop`, `bot-renovate-rebase`,
 `renovate-version-*`, `renovate-type-*`, `security`) must exist; declare them in
 safe-settings with **every `color:` quoted**.

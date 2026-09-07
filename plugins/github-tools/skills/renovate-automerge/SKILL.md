@@ -64,6 +64,23 @@ Work one repo at a time and verify each step against the live API, not the decla
 6. Every change is a PR that states the precondition in its own words. Do not cite other
    orgs' PRs as the pattern source.
 
+## The two guards worth running on every org
+
+Every failure in the rollout that produced this skill was invisible to a green sync and obvious
+to a comparison against what is actually in force. Two read-only checks catch all of them, and
+they are cheap enough to run whenever CI or the config moves:
+
+1. **Coverage** — enumerate the org's active, non-excluded repos and assert each matches some
+   suborg pattern. Catches the `"*"`-misses-`.github` case *and* the literal-naming gap, where a
+   newly created repo is silently unmanaged with no error and a green sync.
+2. **Declared vs enforced, as a set** — for each repo, diff the declared `(context,
+   integration_id)` pairs against `GET /rules/branches/<default>`. Catches a misnamed or
+   substituted context, and the merge bug that can replace a rule and still return 200, shrinking
+   the required list with nothing going red.
+
+`scripts/audit-repo.sh` does the second for one repo; the first is an org-level loop over
+`GET /installation/repositories` against the suborg patterns.
+
 ## The standing obligation
 
 After the flip, a **new unfiltered CI job is ungated until it is added to the required
