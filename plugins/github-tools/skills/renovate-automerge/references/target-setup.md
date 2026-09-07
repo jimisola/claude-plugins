@@ -64,6 +64,16 @@ repo's own config), or a per-repo config where the org has no preset:
 
   It only fires where a lockfile exists, so scope it before arguing about it: repos with no
   lockfile never see one, and a preset rule there is inert.
+
+  **Two valid ways to write it, both documented.** Renovate's own automerge docs use the
+  object form (`lockFileMaintenance: { enabled: true, automerge: true }`); and
+  `lib/workers/repository/updates/flatten.ts` sets `updateType = 'lockFileMaintenance'`
+  and applies `packageRules`, so a `matchUpdateTypes: ["lockFileMaintenance"]` rule matches
+  too. The packageRule form keeps all six updateTypes in one visible block, which is what
+  makes the original omission harder to repeat; the object form is the docs example. Note
+  the merge order if you ever use both: packageRules are applied, the `lockFileMaintenance`
+  object is merged in, then packageRules are applied again — so the object wins on a key
+  both set. Pick one per config and say which in a comment.
 - Forks under an "All repositories" install: `forkProcessing: "enabled"` in **root
   `renovate.json`** (JSONC allowed: `//` comments, double-quoted keys, no trailing commas).
 
