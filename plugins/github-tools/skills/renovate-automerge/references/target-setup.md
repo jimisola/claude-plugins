@@ -27,8 +27,8 @@ repo's own config), or a per-repo config where the org has no preset:
     { matchUpdateTypes: ["digest"], addLabels: ["renovate-version-digest"] },
     // lockFileMaintenance is its own updateType and matches NONE of the five above, so
     // without a rule it gets no label and no automerge and queues for a human invisibly.
-    // Decide it deliberately: automerge like a patch, or label it so the queue is filterable.
-    { matchUpdateTypes: ["lockFileMaintenance"], addLabels: ["renovate-version-lockfile"] },
+    // It automerges here as a deliberate exception — see below; the soak was never available.
+    { matchUpdateTypes: ["lockFileMaintenance"], addLabels: ["renovate-version-lockfile"], automerge: true },
     // GitHub Actions: commit metadata only. The tier rules above decide automerge, so a
     // major action bump (input renames, node runtime changes) waits for a human like any major.
     { matchManagers: ["github-actions"], semanticCommitScope: "github-actions" },
@@ -46,12 +46,24 @@ repo's own config), or a per-repo config where the org has no preset:
 - The default `internalChecksFilter: strict` means a PR is only opened for a version
   already past `minimumReleaseAge` — so `renovate/stability-days` is never required.
 - Managers by their real names: `pip_requirements`, not `pip`.
-- **`lockFileMaintenance` is a sixth updateType.** With `lockFileMaintenance: { enabled:
-  true }` and only major/minor/patch/pin/digest rules, its PRs carry no `renovate-version-*`
-  label and never automerge — they queue silently for a human and cannot even be filtered
-  for. Found on three repos with PRs open for two weeks. Whether a wholesale lockfile
-  refresh should automerge is a real question (bigger blast radius than one bump); the
-  point is to answer it rather than inherit the answer by omission.
+- **`lockFileMaintenance` is a sixth updateType**, and the choice about it is binary.
+  With only major/minor/patch/pin/digest rules its PRs carry no `renovate-version-*` label
+  and never automerge — they queue silently and cannot even be filtered for (found on five
+  repos across four orgs, oldest open a fortnight). And **`minimumReleaseAge` cannot apply
+  to it at all**: Renovate delegates the regeneration to the package manager and never sees
+  the individual transitive versions, so "label it and give it a patch-length soak" is not
+  an available option. Automerge with no soak, or do not automerge.
+
+  Whichever you pick, write the trade into the rule comment. With `rangeStrategy: "pin"`
+  every *declared* dependency is frozen, so a lockfile-maintenance PR is the only path by
+  which **transitive** dependencies ever change — simultaneously the only transitive-update
+  mechanism and the only control point over transitive supply chain. Automerging makes CI
+  the sole gate, which catches "broken" but not "compromised". Label-only keeps the control
+  point but has to come with a schedule and someone who actually triages, or the queue just
+  accumulates — which is the same silent failure in different clothes.
+
+  It only fires where a lockfile exists, so scope it before arguing about it: repos with no
+  lockfile never see one, and a preset rule there is inert.
 - Forks under an "All repositories" install: `forkProcessing: "enabled"` in **root
   `renovate.json`** (JSONC allowed: `//` comments, double-quoted keys, no trailing commas).
 
