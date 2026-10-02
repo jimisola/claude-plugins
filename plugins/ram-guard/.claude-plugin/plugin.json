@@ -1,0 +1,8 @@
+{
+  "name": "ram-guard",
+  "version": "0.1.0",
+  "description": "Shows free RAM and heavy jobs; refuses a subagent or a heavy build when the machine cannot take it",
+  "author": {
+    "name": "jimisola"
+  }
+}

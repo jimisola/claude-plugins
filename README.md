@@ -1,6 +1,6 @@
 # Claude Plugins
 
-Personal Claude Code plugins — development standards, quality tools, and GitHub tools.
+Personal Claude Code plugins — development standards, quality tools, GitHub tools, and a RAM guard mod.
 
 ## Plugins
 
@@ -40,6 +40,19 @@ GitHub tools for the parts of GitHub that have no comfortable CLI.
 | `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, and the first sync |
 | `renovate-automerge` | Bringing a repo or org onto gated Renovate auto-merge — required checks first, then `platformAutomerge: true`; audit script, checklist and the traps found rolling it out across five orgs |
 
+### ram-guard
+
+A mod (function hooks, no skills) for a machine shared by several sessions.
+
+| Does | When |
+|---|---|
+| Status line: available RAM and running Gradle daemons, emulators, Maven builds, Metro servers | Every 15 s |
+| Toast | Available RAM falls under 6 GiB |
+| Refuses an `Agent` or `Workflow` call | A Gradle daemon or emulator is up, or under 6 GiB is available |
+| Refuses a heavy Bash command (`mvnw`, `gradlew`, `emulator -avd`, `pnpm e2e`/`test:stories`) | Under 4 GiB is available |
+
+Linux only: it reads `/proc/meminfo` and `ps`. A hook that throws is skipped by the engine, so the guard fails open.
+
 ## Installation
 
 ### 1. Add the marketplace (one-time setup)
@@ -54,6 +67,7 @@ GitHub tools for the parts of GitHub that have no comfortable CLI.
 /plugin install dev-standards@claude-plugins
 /plugin install quality@claude-plugins
 /plugin install github-tools@claude-plugins
+/plugin install ram-guard@claude-plugins
 ```
 
 Or use the interactive UI: `/plugin` → **Discover** tab → select plugins and choose scope (user / project / local).
