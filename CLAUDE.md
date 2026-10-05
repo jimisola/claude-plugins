@@ -4,7 +4,7 @@
 
 Before **every commit or PR**, complete all mandatory steps in [Local Testing](#local-testing).
 
-Use `/quality:preflight` to run both steps in one go.
+Use `/quality:preflight` to run steps 1 and 2 in one go.
 
 ---
 
@@ -22,10 +22,14 @@ claude-plugins/
 │   ├── quality-tools/                 # Quality tools (plugin name: quality)
 │   │   ├── .claude-plugin/plugin.json
 │   │   └── skills/                    # Skills (auto-applied + user-invocable)
-│   └── github-tools/                  # GitHub tools
+│   ├── github-tools/                  # GitHub tools
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── hooks/                     # PreToolUse enforcement for uploads
+│   │   └── skills/                    # Skills (auto-applied + user-invocable)
+│   └── ram-guard/                     # A mod: function hooks, no skills
 │       ├── .claude-plugin/plugin.json
-│       ├── hooks/                     # PreToolUse enforcement for uploads
-│       └── skills/                    # Skills (auto-applied + user-invocable)
+│       ├── hooks/                     # hooks.json names the TypeScript module
+│       └── tests/                     # Run with `claude plugin test`
 ```
 
 ## Versioning
@@ -36,7 +40,7 @@ claude-plugins/
 
 ## Local Testing
 
-**Both steps below are mandatory before committing or raising a PR.**
+**The steps below are mandatory before committing or raising a PR (step 3 when a mod changed).**
 
 1. Validate the marketplace structure:
 
@@ -48,7 +52,13 @@ claude plugin validate .
    avoid picking up project-local config):
 
 ```bash
-cd /tmp && claude --plugin-dir /path/to/claude-plugins/plugins/dev-standards --plugin-dir /path/to/claude-plugins/plugins/quality-tools --plugin-dir /path/to/claude-plugins/plugins/github-tools -p "list all available skills and commands from plugins"
+cd /tmp && claude --plugin-dir /path/to/claude-plugins/plugins/dev-standards --plugin-dir /path/to/claude-plugins/plugins/quality-tools --plugin-dir /path/to/claude-plugins/plugins/github-tools --plugin-dir /path/to/claude-plugins/plugins/ram-guard -p "list all available skills and commands from plugins"
+```
+
+3. For a mod (a plugin whose `hooks/hooks.json` names a module), also run its tests:
+
+```bash
+claude plugin test plugins/ram-guard
 ```
 
 ## Editing Skills
