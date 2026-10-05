@@ -1,6 +1,6 @@
 ---
 name: merge-ready
-description: Merge open pull requests one at a time, each only when it is genuinely ready — checks green, no conflicts, branch up to date, not a draft, and a title and body that still describe what the branch actually contains. Rebases and re-verifies between merges.
+description: Merge open pull requests one at a time, each only when it is genuinely ready — asks first whether to cover bot, personal and/or other PRs and whether to include drafts, then requires checks green, no conflicts, branch up to date, and a title and body that still describe what the branch actually contains. Rebases and re-verifies between merges.
 disable-model-invocation: true
 ---
 
@@ -9,6 +9,24 @@ disable-model-invocation: true
 Merging is the user's call, so this skill never runs on its own — it is invoked
 deliberately. Given a set of open PRs, it merges the ones that are ready, in
 order, and leaves the rest alone with a reason.
+
+## Ask the scope first
+
+Unless the invocation already says, ask both questions in one `AskUserQuestion`
+call before listing anything:
+
+1. **Whose PRs** (multi-select): bot PRs (Renovate, Dependabot and other bot
+   accounts), personal PRs (the user is the author), other PRs.
+2. **Which state**: only ready PRs, or all (ready + draft).
+
+Classify by the author in `gh pr list --json number,title,author,isDraft`:
+`author.is_bot` (or a `app/…` / `[bot]` login) is a bot, `author.login` equal
+to `gh api user -q .login` is personal, anything else is other. List the
+matching PRs and their category before starting, so the user sees the set.
+
+Including drafts widens the candidate set, not the bar: a draft still has to
+meet every other precondition, and is marked ready (`gh pr ready <n>`) only
+immediately before its merge.
 
 ## The preconditions
 
@@ -22,7 +40,7 @@ and invalidates the others.
 3. **The branch is up to date** with the base branch: the base must be an
    ancestor of the head. GitHub's own "mergeable" says nothing about this, so
    test it explicitly.
-4. **Not a draft.**
+4. **Not a draft** — unless the user chose to include drafts (see above).
 5. **Title and body still describe what the branch contains.** This is the one
    a machine cannot check for you — see below.
 6. **Issue references resolve.** A body that says "fixes #12" when there is no
