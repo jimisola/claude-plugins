@@ -1,6 +1,6 @@
 # Claude Plugins
 
-Personal Claude Code plugins — development standards, quality tools, GitHub tools, and a RAM guard mod.
+Personal Claude Code plugins — development standards, quality tools, GitHub tools, CAD tools, and a RAM guard mod.
 
 ## Plugins
 
@@ -40,6 +40,14 @@ GitHub tools for the parts of GitHub that have no comfortable CLI.
 | `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, and the first sync |
 | `renovate-automerge` | Bringing a repo or org onto gated Renovate auto-merge — required checks first, then `platformAutomerge: true`; audit script, checklist and the traps found rolling it out across five orgs |
 
+### cad-tools
+
+Tools for CAD models and 3D prints.
+
+| Skill | Auto-applies when... |
+|---|---|
+| `turntable-video` | Asked for a 360°, turntable, spinning or exploded-view video or renders of a 3D model to share. Renders offscreen, so it also replaces blank FreeCAD GUI screenshots |
+
 ### ram-guard
 
 A mod (function hooks, no skills) for a machine shared by several sessions.
@@ -67,6 +75,7 @@ Linux only: it reads `/proc/meminfo` and `ps`. A hook that throws is skipped by 
 /plugin install dev-standards@claude-plugins
 /plugin install quality@claude-plugins
 /plugin install github-tools@claude-plugins
+/plugin install cad-tools@claude-plugins
 /plugin install ram-guard@claude-plugins
 ```
 
@@ -83,5 +92,5 @@ To refresh plugin listings after upstream changes:
 ## Local Testing
 
 ```bash
-claude --plugin-dir ./plugins/dev-standards --plugin-dir ./plugins/quality-tools --plugin-dir ./plugins/github-tools
+claude --plugin-dir ./plugins/dev-standards --plugin-dir ./plugins/quality-tools --plugin-dir ./plugins/github-tools --plugin-dir ./plugins/cad-tools
 ```
