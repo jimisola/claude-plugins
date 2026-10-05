@@ -1,6 +1,6 @@
 {
   "name": "jimisola-plugins",
-  "description": "Personal Claude Code plugins — development standards, quality tools, GitHub tools, and a RAM guard mod.",
+  "description": "Personal Claude Code plugins — development standards, quality tools, GitHub tools, CAD tools, and a RAM guard mod.",
   "owner": {
     "name": "jimisola"
   },
@@ -20,6 +20,10 @@
     {
       "name": "ram-guard",
       "source": "./plugins/ram-guard"
+    },
+    {
+      "name": "cad-tools",
+      "source": "./plugins/cad-tools"
     }
   ]
 }

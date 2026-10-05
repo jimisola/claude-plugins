@@ -26,6 +26,9 @@ claude-plugins/
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── hooks/                     # PreToolUse enforcement for uploads
 │   │   └── skills/                    # Skills (auto-applied + user-invocable)
+│   ├── cad-tools/                     # CAD and 3D-print tools
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/                    # Skills (auto-applied + user-invocable)
 │   └── ram-guard/                     # A mod: function hooks, no skills
 │       ├── .claude-plugin/plugin.json
 │       ├── hooks/                     # hooks.json names the TypeScript module
@@ -52,7 +55,7 @@ claude plugin validate .
    avoid picking up project-local config):
 
 ```bash
-cd /tmp && claude --plugin-dir /path/to/claude-plugins/plugins/dev-standards --plugin-dir /path/to/claude-plugins/plugins/quality-tools --plugin-dir /path/to/claude-plugins/plugins/github-tools --plugin-dir /path/to/claude-plugins/plugins/ram-guard -p "list all available skills and commands from plugins"
+cd /tmp && claude --plugin-dir /path/to/claude-plugins/plugins/dev-standards --plugin-dir /path/to/claude-plugins/plugins/quality-tools --plugin-dir /path/to/claude-plugins/plugins/github-tools --plugin-dir /path/to/claude-plugins/plugins/cad-tools --plugin-dir /path/to/claude-plugins/plugins/ram-guard -p "list all available skills and commands from plugins"
 ```
 
 3. For a mod (a plugin whose `hooks/hooks.json` names a module), also run its tests:
