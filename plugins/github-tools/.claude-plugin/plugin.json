@@ -1,7 +1,7 @@
 {
   "name": "github-tools",
   "description": "GitHub tools \u2014 attach images and video to PRs and issues from the command line, merge pull requests once they are genuinely ready, run an org on safe-settings, and bring repos onto gated Renovate auto-merge.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": {
     "name": "jimisola"
   },
