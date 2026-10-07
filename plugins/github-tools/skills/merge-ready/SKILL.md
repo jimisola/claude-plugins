@@ -107,21 +107,45 @@ gh api --method PUT repos/OWNER/REPO/pulls/<n>/merge-async \
 ```
 
 It answers `{"status":"pending"}` and lands a few seconds later — poll rather
-than reading that as failure:
+than reading that as failure, but with a limit: a merge a rule still blocks is
+accepted as pending too, and then never lands.
 
 ```bash
-until [ "$(gh pr view <n> --json state -q .state)" = "MERGED" ]; do sleep 4; done
+for i in $(seq 30); do
+  [ "$(gh pr view <n> --json state -q .state)" = MERGED ] && break; sleep 4
+done
+gh pr view <n> --json state,mergeStateStatus
 ```
+
+Still open after two minutes with `mergeStateStatus` `BLOCKED` means a rule is
+in the way: stop, find it (below) and report it rather than polling on.
 
 `merge_action` also takes `merge_queue` and `default`; `direct_merge` means now.
 
-**Admin bypass is off unless the scope turned it on.** Bypass authority comes
-from the ruleset's `bypass_actors`, not from a flag: the same `merge-async`
-call merges past ruleset blocks (failing or missing required checks, required
-reviews) when the caller is a bypass actor, and is refused otherwise — check
-with `gh api repos/OWNER/REPO/rulesets/<id>` before relying on it.
+### What can block a merge
 
-With bypass on, it overrides only what the ruleset enforces. Still wait for
+Check `mergeStateStatus` before calling `merge-async`; `BLOCKED` with
+`mergeable` `MERGEABLE` means a rule, not the code, stops it. Two sources, and
+a repo can have both:
+
+- **Rulesets** — `gh api repos/OWNER/REPO/rules/branches/<base>` lists every
+  rule in force on the base branch.
+- **Classic branch protection** — `gh api repos/OWNER/REPO/branches/<base>/protection`
+  (404 means none). Required reviews here are the usual surprise in a solo repo.
+
+**Admin bypass is off unless the scope turned it on.** How it works depends on
+the source:
+
+- **Ruleset**: authority comes from its `bypass_actors`, not a flag — check
+  `gh api repos/OWNER/REPO/rulesets/<id>`. `merge-async` merges past ruleset
+  blocks when the caller is a bypass actor.
+- **Classic protection**: admins may bypass only when `enforce_admins` is off,
+  and `merge-async` does not do it — it enqueues with `"bypass_rules": false`
+  and stays pending. Use `gh pr merge <n> --squash --admin` instead; that
+  cannot merge a stacked PR, so a stacked PR blocked this way is the user's to
+  merge.
+
+With bypass on, it overrides only what a ruleset or branch protection enforces. Still wait for
 pending checks to finish, and never bypass a conflict, a stale branch or a
 wrong description. For each PR merged by bypass, name the check or review it
 went past.
