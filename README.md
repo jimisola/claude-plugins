@@ -47,6 +47,7 @@ Tools for CAD models and 3D prints.
 | Skill | Auto-applies when... |
 |---|---|
 | `turntable-video` | Asked for a 360°, turntable, spinning or exploded-view video or renders of a 3D model to share. Renders offscreen, so it also replaces blank FreeCAD GUI screenshots |
+| `bambu-3mf` | Asked for a Bambu Studio 3MF with printer, process and filament presets and overrides (supports, infill, walls) applied, or when a 3MF opens with "invalid config, load geometry data only" |
 
 ### ram-guard
 
