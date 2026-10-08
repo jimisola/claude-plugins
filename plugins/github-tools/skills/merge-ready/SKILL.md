@@ -132,7 +132,9 @@ recurring kinds and their right answers.
 ## Merging
 
 Every merge goes through GitHub's async merge API — the recommended path for
-programmatic merges and the only one that handles stacks:
+programmatic merges and the only one that handles stacks: `PUT
+repos/OWNER/REPO/pulls/<n>/merge-async` to request it, `GET
+repos/OWNER/REPO/pulls/<n>/merge-async/<uuid>` to follow it.
 
 - **Pin `sha`** to the head the preconditions were checked against. A push
   after the check cancels the merge instead of landing unverified code.
