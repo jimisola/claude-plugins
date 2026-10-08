@@ -1,15 +1,17 @@
 import type { EngineInterface, Register } from 'claude-code'
 
-import { AGENT_FLOOR_GIB, countJobs, parseMeminfo, refuseAgent, refuseCommand, statusLine } from './scan'
+import { AGENT_FLOOR_GIB, countJobs, parseGtt, parseMeminfo, refuseAgent, refuseCommand, statusLine } from './scan'
 import type { Snapshot } from './scan'
 
 async function snapshot($: EngineInterface): Promise<Snapshot> {
-  const [meminfo, ps] = await Promise.all([
+  const [meminfo, ps, gtt] = await Promise.all([
     $.fs.read('/proc/meminfo'),
     $.process.run(['ps', '-eo', 'args=']),
+    // No amdgpu card means no match and empty output, which reads as 0.
+    $.process.run(['sh', '-c', 'cat /sys/class/drm/card*/device/mem_info_gtt_used 2>/dev/null']),
   ])
 
-  return { ...parseMeminfo(meminfo), jobs: countJobs(ps.stdout) }
+  return { ...parseMeminfo(meminfo), igpuGiB: parseGtt(gtt.stdout), jobs: countJobs(ps.stdout) }
 }
 
 // Edge-triggers the low-memory toast; a reload starting it over costs at most one repeat.

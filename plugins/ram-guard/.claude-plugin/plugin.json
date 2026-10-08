@@ -1,7 +1,7 @@
 {
   "name": "ram-guard",
-  "version": "0.1.0",
-  "description": "Shows free RAM and heavy jobs; refuses a subagent or a heavy build when the machine cannot take it",
+  "version": "0.2.0",
+  "description": "Shows free RAM, heavy jobs and memory a local model holds on the iGPU; refuses a subagent or a heavy build when the machine cannot take it",
   "author": {
     "name": "jimisola"
   }

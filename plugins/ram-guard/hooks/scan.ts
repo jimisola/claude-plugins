@@ -1,10 +1,12 @@
 // Pure parsing and policy, kept apart from register.ts so tests need no host.
 
-export type Job = 'gradle' | 'emulator' | 'maven' | 'metro'
+export type Job = 'gradle' | 'emulator' | 'maven' | 'metro' | 'ollama'
 
 export type Snapshot = {
   availableGiB: number
   totalGiB: number
+  // System RAM the iGPU has borrowed (amdgpu GTT); a loaded model lives here, not in its RSS.
+  igpuGiB: number
   jobs: Record<Job, number>
 }
 
@@ -19,10 +21,12 @@ const JOBS: readonly [Job, RegExp][] = [
   ['maven', /org\.codehaus\.plexus\.classworlds\.launcher\.Launcher/],
   // Anchored on the node process itself: its bash -c and pnpm exec launchers repeat the command line.
   ['metro', /^node\s\S*(expo\/bin\/cli|react-native\/cli\.js|metro\/src\/cli)\S*\sstart\b/],
+  // One runner per loaded model; `ollama serve` alone holds no model.
+  ['ollama', /^\S*\bollama runner\s/],
 ]
 
 // Commands that start one of the jobs above, or a build as heavy.
-const HEAVY = /\b(gradlew|mvnw|mvn)\b|\bemulator\s+-avd\b|\bpnpm\s+(e2e|test:stories)\b/
+const HEAVY = /\b(gradlew|mvnw|mvn)\b|\bemulator\s+-avd\b|\bpnpm\s+(e2e|test:stories)\b|\bollama\s+run\b/
 
 const GIB = 1024 * 1024
 
@@ -33,7 +37,7 @@ export function parseMeminfo(text: string): { availableGiB: number; totalGiB: nu
 }
 
 export function countJobs(psArgs: string): Record<Job, number> {
-  const jobs: Record<Job, number> = { gradle: 0, emulator: 0, maven: 0, metro: 0 }
+  const jobs: Record<Job, number> = { gradle: 0, emulator: 0, maven: 0, metro: 0, ollama: 0 }
   for (const line of psArgs.split('\n')) {
     const hit = JOBS.find(([, pattern]) => pattern.test(line))
     if (hit) {
@@ -44,12 +48,19 @@ export function countJobs(psArgs: string): Record<Job, number> {
   return jobs
 }
 
+/** Sums the GTT byte counts of every amdgpu card, one number per line, in GiB. */
+export function parseGtt(text: string): number {
+  return text.split('\n').reduce((sum, line) => sum + (Number(line) || 0), 0) / (GIB * 1024)
+}
+
 export function statusLine(s: Snapshot): string {
   const running = (Object.entries(s.jobs) as [Job, number][])
     .filter(([, n]) => n > 0)
     .map(([job, n]) => `${job} ${n}`)
 
-  return [`RAM ${s.availableGiB.toFixed(1)}/${Math.round(s.totalGiB)}G free`, ...running].join(' · ')
+  const igpu = s.igpuGiB >= 1 ? [`igpu ${s.igpuGiB.toFixed(1)}G`] : []
+
+  return [`RAM ${s.availableGiB.toFixed(1)}/${Math.round(s.totalGiB)}G free`, ...running, ...igpu].join(' · ')
 }
 
 /** Why a subagent may not start now, or undefined when it may. */
