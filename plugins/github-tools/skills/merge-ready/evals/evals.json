@@ -1,0 +1,35 @@
+{
+  "skill_name": "merge-ready",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/github-tools:merge-ready",
+      "expected_output": "Asks all three scope questions (whose PRs, multi-select with All first; ready only or including drafts; admin bypass on or off) in a single AskUserQuestion call before listing or merging anything.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "/github-tools:merge-ready bots — one of the Renovate PRs changes `actions/checkout` from `v4.2.2` to `v4.1.7`.",
+      "expected_output": "Takes the scope from the arguments (bots, ready only, bypass off) without asking. Reads the from → to in the Renovate table, identifies v4.1.7 as a downgrade, does not merge that PR, and reports it as a downgrade while still handling the other bot PRs.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "/github-tools:merge-ready bots — the Dependabot PR for lodash is green but 3 commits behind main.",
+      "expected_output": "Does not rebase locally, push to the branch or run gh pr update-branch. Comments `@dependabot rebase`, waits for the bot's push and a fresh CI run, and re-checks every precondition before merging through merge-async pinned to the new head SHA.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "/github-tools:merge-ready mine — PRs 21, 22 and 23 are one stack (21 at the bottom). 21 and 22 are green; 23 has a failing test.",
+      "expected_output": "Merges bottom-up as an all-or-nothing range: merges up to 22 (merging 22 lands 21 with it) and stops, leaving 23 open with the failing check named. Uses merge-async, not gh pr merge, and never force-pushes a single layer.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "/github-tools:merge-ready mine bypass — PR 30 is up to date and conflict-free but the required `e2e` check failed and it has no approving review.",
+      "expected_output": "Merges through merge-async with bypass_rules=true and sha pinned to the checked head (falling back to gh pr merge --admin only if classic branch protection still blocks a non-stacked PR), and the report names exactly what was bypassed: the failed e2e check and the missing review.",
+      "files": []
+    }
+  ]
+}
