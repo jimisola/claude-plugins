@@ -85,6 +85,36 @@ def apply_overrides(preset, sets):
     return preset
 
 
+def record_changes(out, process_keys, filament_keys):
+    """List changed keys in different_settings_to_system ([process, filament, printer]).
+
+    The GUI rebuilds each preset from the system one plus these keys; the CLI leaves the
+    list empty, so without it the GUI slices with stock settings.
+    """
+    src = zipfile.ZipFile(out)
+    items = {i: src.read(i) for i in src.namelist()}
+    src.close()
+    proj = json.loads(items["Metadata/project_settings.config"])
+    proj["different_settings_to_system"] = [";".join(sorted(process_keys)),
+                                            ";".join(sorted(filament_keys)), ""]
+    items["Metadata/project_settings.config"] = json.dumps(proj, indent=4).encode()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for name, data in items.items():
+            z.writestr(name, data)
+
+
+def changed_keys(kind, name, sets):
+    stock = resolve(kind, name)
+    keys = []
+    for s in sets:
+        key, _, value = s.partition("=")
+        cur = stock.get(key)
+        cur = cur[0] if isinstance(cur, list) and cur else cur
+        if str(cur) != value:
+            keys.append(key)
+    return keys
+
+
 def check(out, expected):
     """Read the written project back and confirm the overrides landed."""
     cfg = json.loads(zipfile.ZipFile(out).read("Metadata/project_settings.config"))
@@ -128,6 +158,8 @@ def main():
         paths[kind] = os.path.join(tmp, kind + ".json")
         json.dump(apply_overrides(resolve(kind, name), sets), open(paths[kind], "w"))
 
+    proc_keys = changed_keys("process", a.process, a.set)
+    fil_keys = changed_keys("filament", a.filament, a.set_filament)
     jobs = [a.meshes] if a.one else [[m] for m in a.meshes]
     expected = dict(s.partition("=")[::2] for s in a.set + a.set_filament)
     failed = False
@@ -146,6 +178,7 @@ def main():
             print("FAILED %s\n%s" % (out, (r.stdout + r.stderr)[-2000:]), file=sys.stderr)
             failed = True
             continue
+        record_changes(out, proc_keys, fil_keys)
         cfg, bad = check(out, expected)
         print("wrote %s  [%s | %s | %s]" % (out, cfg.get("printer_settings_id"),
                                            cfg.get("print_settings_id"), cfg.get("filament_settings_id")))
