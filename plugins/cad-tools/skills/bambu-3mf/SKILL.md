@@ -6,6 +6,7 @@ description: Writes Bambu Studio project 3MFs from STL/OBJ/STEP meshes, with the
 ## Why this route
 
 - **Never hand-write the 3MF's config.** A 3MF with `model_settings.config` but no full `project_settings.config` opens with "invalid config, load geometry data only" and drops every setting.
+- **List the changed keys, or the GUI drops them.** When the user slices in the Bambu window, it rebuilds each preset from the system preset plus the keys named in `different_settings_to_system`. The CLI leaves that list empty, so the file looks right until it is sliced, and then it slices with stock settings. The script fills the list in. A headless `--slice` reads the full config, so it does not catch this.
 - **Bambu Studio's own CLI writes the project** from its presets. The script flattens the preset `inherits` chains (system presets, then the user's own under `~/.config/BambuStudio/user/<id>/`), applies the overrides and runs the CLI headless.
 - **Requirements:** Bambu Studio installed (AppImage, PATH, or `BAMBU_STUDIO`/`--bambu`), and Python 3 with the standard library only. It has to have been started once, so the presets are on disk.
 
