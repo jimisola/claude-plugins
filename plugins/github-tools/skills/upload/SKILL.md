@@ -37,6 +37,6 @@ Requires Node 22.18+. Works the same on Windows, macOS, and Linux; no dependenci
 - A bare `curl` of the returned URL gives **404 anonymously — that is normal**, not a failed upload. GitHub rewrites it into a short-lived signed image URL at render time, for logged-out viewers too. With the bearer token the URL returns 200, which is how to verify an upload landed.
 - Untested edge cases to flag to the user rather than assume: fine-grained PATs, and orgs enforcing SAML SSO (the token may need explicit org authorization).
 
-Do **not** work around a failure by committing images to a branch (permanent binaries; raw URLs break on private repos) or by hosting them as release assets (throwaway tags can be picked up by auto-updaters and version pickers as real releases).
+Do **not** work around a failure or a refused file type (a PDF, say) by committing the file to a branch (permanent binaries; raw URLs break on private repos) or by hosting it as a release asset (throwaway tags can be picked up by auto-updaters and version pickers as real releases) — not even as an option offered to the user. Point them at drag-and-drop in the browser instead.
 
 Full endpoint behavior, verification notes, and the anti-pattern rationale: [references/endpoint-notes.md](references/endpoint-notes.md).
