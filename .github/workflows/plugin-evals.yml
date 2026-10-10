@@ -27,7 +27,7 @@ concurrency:
 env:
   CLAUDE_CODE_VERSION: "2.1.296"
   EVAL_MODEL: claude-sonnet-5-5
-  EVAL_JUDGE_MODEL: claude-haiku-5-5
+  EVAL_JUDGE_MODEL: claude-sonnet-5-5
 
 jobs:
   eval:
