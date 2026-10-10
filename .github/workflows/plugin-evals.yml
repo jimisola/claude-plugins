@@ -1,0 +1,135 @@
+name: Plugin evals
+
+on:
+  pull_request:
+    paths:
+      - "plugins/*/skills/**"
+      - "plugins/*/evals/**"
+      - ".github/workflows/plugin-evals.yml"
+  workflow_dispatch:
+    inputs:
+      plugins:
+        description: "Plugins to evaluate, space-separated (default: all with evals)"
+        required: false
+      baseline:
+        description: "Also run the no-plugin baseline (doubles the cost)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: plugin-evals-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLAUDE_CODE_VERSION: "2.1.296"
+  EVAL_MODEL: claude-sonnet-5-5
+  EVAL_JUDGE_MODEL: claude-sonnet-5-5
+
+jobs:
+  eval:
+    # Skips until workload identity federation is set up (issue #18); fork PRs get no OIDC token.
+    if: >-
+      vars.ANTHROPIC_FEDERATION_RULE_ID != '' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ANTHROPIC_FEDERATION_RULE_ID: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+      ANTHROPIC_ORGANIZATION_ID: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+      ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+      ANTHROPIC_WORKSPACE_ID: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Pick plugins
+        id: pick
+        env:
+          INPUT_PLUGINS: ${{ inputs.plugins }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$INPUT_PLUGINS" ]; then
+            plugins="$INPUT_PLUGINS"
+          elif [ -n "$BASE_SHA" ] && git diff --quiet "$BASE_SHA" HEAD -- .github/workflows/plugin-evals.yml; then
+            plugins=$(git diff --name-only "$BASE_SHA" HEAD -- plugins | cut -d/ -f2 | sort -u | tr '\n' ' ')
+          else
+            plugins=$(find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f ')
+          fi
+          with_evals=""
+          for p in $plugins; do [ -d "plugins/$p/evals" ] && with_evals="$with_evals $p"; done
+          echo "plugins=${with_evals# }" >> "$GITHUB_OUTPUT"
+          echo "Plugins with evals: ${with_evals:-none}"
+
+      - name: Install Claude Code
+        if: steps.pick.outputs.plugins != ''
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash -s "$CLAUDE_CODE_VERSION"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run evals
+        if: steps.pick.outputs.plugins != ''
+        env:
+          PLUGINS: ${{ steps.pick.outputs.plugins }}
+          ABLATION: ${{ inputs.baseline && 'with-without' || 'none' }}
+        # GitHub tokens are single-use at the exchange (jti), and one eval fires parallel
+        # judge calls, so each case gets its own exchange and runs on the minted token.
+        run: |
+          unset ANTHROPIC_API_KEY
+          exchange() {
+            local jwt
+            jwt=$(curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://api.anthropic.com" | jq -r .value)
+            jq -n --arg a "$jwt" '{grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: $a,
+                federation_rule_id: env.ANTHROPIC_FEDERATION_RULE_ID, organization_id: env.ANTHROPIC_ORGANIZATION_ID,
+                service_account_id: env.ANTHROPIC_SERVICE_ACCOUNT_ID, workspace_id: env.ANTHROPIC_WORKSPACE_ID}' \
+              | curl -sSf https://api.anthropic.com/v1/oauth/token -H "content-type: application/json" --data @- \
+              | jq -r .access_token
+          }
+          mkdir -p eval-results
+          status=0
+          for p in $PLUGINS; do
+            cases=$(find "plugins/$p/evals" -path '*/results' -prune -o \( -name prompt.md -o -name case.yaml \) -printf '%h\n' \
+              | xargs -n1 basename | sort -u)
+            for c in $cases; do
+              token=$(exchange) || { echo "::error::token exchange failed for $p/$c"; status=1; continue; }
+              echo "::add-mask::$token"
+              env -u ANTHROPIC_FEDERATION_RULE_ID -u ANTHROPIC_SERVICE_ACCOUNT_ID ANTHROPIC_AUTH_TOKEN="$token" \
+                claude plugin eval "plugins/$p" --case "$c" --trust-plugin --no-publish \
+                  --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
+                  --threshold 0.8 --max-cost-usd 1 --ablation "$ABLATION" \
+                  --json "eval-results/$p--$c.json" || status=1
+            done
+          done
+          exit $status
+
+      - name: Summarise cost and scores
+        if: always() && steps.pick.outputs.plugins != ''
+        run: |
+          shopt -s nullglob
+          files=(eval-results/*.json)
+          [ ${#files[@]} -gt 0 ] || exit 0
+          {
+            jq -rs '"### Plugin evals  ·  $\(map(.costUsd // 0) | add * 100 | round / 100)  ·  \(map(.durationSeconds // 0) | add | round)s  ·  claude \(.[0].claudeVersion)"' "${files[@]}"
+            echo
+            echo "| Plugin | Case | Score | Cost | Note |"
+            echo "|---|---|---|---|---|"
+            for f in "${files[@]}"; do
+              name=$(basename "$f" .json)
+              jq -r --arg p "${name%%--*}" '. as $r | .cases[] |
+                "| \($p) | \(.name) | \([.arms.with[]?.score] | if length > 0 then (add / length * 100 | round / 100) else "—" end) | $\($r.costUsd // 0 | . * 100 | round / 100) | \(if $r.partial then "partial: \($r.partialReason)" else "" end) |"' "$f"
+            done
+            echo
+            echo "Models: \`$EVAL_MODEL\`, judge \`$EVAL_JUDGE_MODEL\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.pick.outputs.plugins != ''
+        with:
+          name: eval-results
+          path: eval-results/
+          if-no-files-found: ignore
