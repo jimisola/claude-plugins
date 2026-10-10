@@ -5,6 +5,7 @@ on:
     paths:
       - "plugins/*/skills/**"
       - "plugins/*/evals/**"
+      - ".github/workflows/plugin-evals.yml"
   workflow_dispatch:
     inputs:
       plugins:
@@ -54,7 +55,7 @@ jobs:
         run: |
           if [ -n "$INPUT_PLUGINS" ]; then
             plugins="$INPUT_PLUGINS"
-          elif [ -n "$BASE_SHA" ]; then
+          elif [ -n "$BASE_SHA" ] && git diff --quiet "$BASE_SHA" HEAD -- .github/workflows/plugin-evals.yml; then
             plugins=$(git diff --name-only "$BASE_SHA" HEAD -- plugins | cut -d/ -f2 | sort -u | tr '\n' ' ')
           else
             plugins=$(find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f ')
