@@ -68,55 +68,64 @@ jobs:
       - name: Install Claude Code
         if: steps.pick.outputs.plugins != ''
         run: |
-          echo "ANTHROPIC_IDENTITY_TOKEN_FILE=$RUNNER_TEMP/gha-jwt" >> "$GITHUB_ENV"
           curl -fsSL https://claude.ai/install.sh | bash -s "$CLAUDE_CODE_VERSION"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: Keep the OIDC token fresh
-        if: steps.pick.outputs.plugins != ''
-        # Each GitHub token can be exchanged once and lives ~5 min; every eval run may exchange it.
-        run: |
-          fetch() {
-            curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://api.anthropic.com" \
-              | jq -r .value > "$ANTHROPIC_IDENTITY_TOKEN_FILE.tmp" \
-              && mv "$ANTHROPIC_IDENTITY_TOKEN_FILE.tmp" "$ANTHROPIC_IDENTITY_TOKEN_FILE"
-          }
-          fetch
-          export -f fetch
-          nohup bash -c 'while sleep 20; do fetch || true; done' >/dev/null 2>&1 &
 
       - name: Run evals
         if: steps.pick.outputs.plugins != ''
         env:
           PLUGINS: ${{ steps.pick.outputs.plugins }}
           ABLATION: ${{ inputs.baseline && 'with-without' || 'none' }}
+        # GitHub tokens are single-use at the exchange (jti), and one eval fires parallel
+        # judge calls, so each case gets its own exchange and runs on the minted token.
         run: |
           unset ANTHROPIC_API_KEY
+          exchange() {
+            local jwt
+            jwt=$(curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://api.anthropic.com" | jq -r .value)
+            jq -n --arg a "$jwt" '{grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: $a,
+                federation_rule_id: env.ANTHROPIC_FEDERATION_RULE_ID, organization_id: env.ANTHROPIC_ORGANIZATION_ID,
+                service_account_id: env.ANTHROPIC_SERVICE_ACCOUNT_ID, workspace_id: env.ANTHROPIC_WORKSPACE_ID}' \
+              | curl -sSf https://api.anthropic.com/v1/oauth/token -H "content-type: application/json" --data @- \
+              | jq -r .access_token
+          }
           mkdir -p eval-results
           status=0
           for p in $PLUGINS; do
-            claude plugin eval "plugins/$p" --trust-plugin --no-publish \
-              --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
-              --threshold 0.8 --max-cost-usd 5 --ablation "$ABLATION" \
-              --json "eval-results/$p.json" || status=$?
-            cp -r "plugins/$p/evals/results" "eval-results/$p-report" 2>/dev/null || true
+            cases=$(find "plugins/$p/evals" -path '*/results' -prune -o \( -name prompt.md -o -name case.yaml \) -printf '%h\n' \
+              | xargs -n1 basename | sort -u)
+            for c in $cases; do
+              token=$(exchange) || { echo "::error::token exchange failed for $p/$c"; status=1; continue; }
+              echo "::add-mask::$token"
+              env -u ANTHROPIC_FEDERATION_RULE_ID -u ANTHROPIC_SERVICE_ACCOUNT_ID ANTHROPIC_AUTH_TOKEN="$token" \
+                claude plugin eval "plugins/$p" --case "$c" --trust-plugin --no-publish \
+                  --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
+                  --threshold 0.8 --max-cost-usd 1 --ablation "$ABLATION" \
+                  --json "eval-results/$p--$c.json" || status=1
+            done
           done
           exit $status
 
       - name: Summarise cost and scores
         if: always() && steps.pick.outputs.plugins != ''
         run: |
-          for f in eval-results/*.json; do
-            [ -f "$f" ] || continue
-            jq -r --arg p "$(basename "$f" .json)" '
-              "### \($p)  ·  $\(.costUsd // 0 | . * 100 | round / 100)  ·  \(.durationSeconds // 0 | round)s  ·  claude \(.claudeVersion)"
-              + (if .partial then "  ·  **partial: \(.partialReason)**" else "" end),
-              "", "| Case | Score |", "|---|---|",
-              (.cases[] | "| \(.name) | \([.arms.with[]?.score] | if length > 0 then (add / length * 100 | round / 100) else "—" end) |"),
-              ""' "$f" >> "$GITHUB_STEP_SUMMARY"
-          done
-          echo "Models: \`$EVAL_MODEL\`, judge \`$EVAL_JUDGE_MODEL\`" >> "$GITHUB_STEP_SUMMARY"
+          shopt -s nullglob
+          files=(eval-results/*.json)
+          [ ${#files[@]} -gt 0 ] || exit 0
+          {
+            jq -rs '"### Plugin evals  ·  $\(map(.costUsd // 0) | add * 100 | round / 100)  ·  \(map(.durationSeconds // 0) | add | round)s  ·  claude \(.[0].claudeVersion)"' "${files[@]}"
+            echo
+            echo "| Plugin | Case | Score | Cost | Note |"
+            echo "|---|---|---|---|---|"
+            for f in "${files[@]}"; do
+              name=$(basename "$f" .json)
+              jq -r --arg p "${name%%--*}" '. as $r | .cases[] |
+                "| \($p) | \(.name) | \([.arms.with[]?.score] | if length > 0 then (add / length * 100 | round / 100) else "—" end) | $\($r.costUsd // 0 | . * 100 | round / 100) | \(if $r.partial then "partial: \($r.partialReason)" else "" end) |"' "$f"
+            done
+            echo
+            echo "Models: \`$EVAL_MODEL\`, judge \`$EVAL_JUDGE_MODEL\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: always() && steps.pick.outputs.plugins != ''
