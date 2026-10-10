@@ -1,0 +1,125 @@
+name: Plugin evals
+
+on:
+  pull_request:
+    paths:
+      - "plugins/*/skills/**"
+      - "plugins/*/evals/**"
+  workflow_dispatch:
+    inputs:
+      plugins:
+        description: "Plugins to evaluate, space-separated (default: all with evals)"
+        required: false
+      baseline:
+        description: "Also run the no-plugin baseline (doubles the cost)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: plugin-evals-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLAUDE_CODE_VERSION: "2.1.296"
+  EVAL_MODEL: claude-sonnet-5-5
+  EVAL_JUDGE_MODEL: claude-haiku-5-5
+
+jobs:
+  eval:
+    # Skips until workload identity federation is set up (issue #18); fork PRs get no OIDC token.
+    if: >-
+      vars.ANTHROPIC_FEDERATION_RULE_ID != '' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ANTHROPIC_FEDERATION_RULE_ID: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+      ANTHROPIC_ORGANIZATION_ID: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+      ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+      ANTHROPIC_WORKSPACE_ID: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Pick plugins
+        id: pick
+        env:
+          INPUT_PLUGINS: ${{ inputs.plugins }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$INPUT_PLUGINS" ]; then
+            plugins="$INPUT_PLUGINS"
+          elif [ -n "$BASE_SHA" ]; then
+            plugins=$(git diff --name-only "$BASE_SHA" HEAD -- plugins | cut -d/ -f2 | sort -u | tr '\n' ' ')
+          else
+            plugins=$(find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f ')
+          fi
+          with_evals=""
+          for p in $plugins; do [ -d "plugins/$p/evals" ] && with_evals="$with_evals $p"; done
+          echo "plugins=${with_evals# }" >> "$GITHUB_OUTPUT"
+          echo "Plugins with evals: ${with_evals:-none}"
+
+      - name: Install Claude Code
+        if: steps.pick.outputs.plugins != ''
+        run: |
+          echo "ANTHROPIC_IDENTITY_TOKEN_FILE=$RUNNER_TEMP/gha-jwt" >> "$GITHUB_ENV"
+          curl -fsSL https://claude.ai/install.sh | bash -s "$CLAUDE_CODE_VERSION"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Keep the OIDC token fresh
+        if: steps.pick.outputs.plugins != ''
+        # Each GitHub token can be exchanged once and lives ~5 min; every eval run may exchange it.
+        run: |
+          fetch() {
+            curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://api.anthropic.com" \
+              | jq -r .value > "$ANTHROPIC_IDENTITY_TOKEN_FILE.tmp" \
+              && mv "$ANTHROPIC_IDENTITY_TOKEN_FILE.tmp" "$ANTHROPIC_IDENTITY_TOKEN_FILE"
+          }
+          fetch
+          export -f fetch
+          nohup bash -c 'while sleep 20; do fetch || true; done' >/dev/null 2>&1 &
+
+      - name: Run evals
+        if: steps.pick.outputs.plugins != ''
+        env:
+          PLUGINS: ${{ steps.pick.outputs.plugins }}
+          ABLATION: ${{ inputs.baseline && 'with-without' || 'none' }}
+        run: |
+          unset ANTHROPIC_API_KEY
+          mkdir -p eval-results
+          status=0
+          for p in $PLUGINS; do
+            claude plugin eval "plugins/$p" --trust-plugin --no-publish \
+              --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
+              --threshold 0.8 --max-cost-usd 5 --ablation "$ABLATION" \
+              --json "eval-results/$p.json" || status=$?
+            cp -r "plugins/$p/evals/results" "eval-results/$p-report" 2>/dev/null || true
+          done
+          exit $status
+
+      - name: Summarise cost and scores
+        if: always() && steps.pick.outputs.plugins != ''
+        run: |
+          for f in eval-results/*.json; do
+            [ -f "$f" ] || continue
+            jq -r --arg p "$(basename "$f" .json)" '
+              "### \($p)  ·  $\(.costUsd // 0 | . * 100 | round / 100)  ·  \(.durationSeconds // 0 | round)s  ·  claude \(.claudeVersion)"
+              + (if .partial then "  ·  **partial: \(.partialReason)**" else "" end),
+              "", "| Case | Score |", "|---|---|",
+              (.cases[] | "| \(.name) | \([.arms.with[]?.score] | if length > 0 then (add / length * 100 | round / 100) else "—" end) |"),
+              ""' "$f" >> "$GITHUB_STEP_SUMMARY"
+          done
+          echo "Models: \`$EVAL_MODEL\`, judge \`$EVAL_JUDGE_MODEL\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.pick.outputs.plugins != ''
+        with:
+          name: eval-results
+          path: eval-results/
+          if-no-files-found: ignore
