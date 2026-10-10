@@ -1,7 +1,7 @@
 {
   "name": "cad-tools",
   "description": "CAD and 3D-print tools: render a looping 360° turntable video and stills of a model, with a lid that lifts off to show what is inside, and write Bambu Studio project 3MFs with print settings applied.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "jimisola"
   },
