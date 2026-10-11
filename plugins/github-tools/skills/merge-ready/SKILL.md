@@ -27,7 +27,10 @@ Three settings, taken from the arguments where given:
 contributors.
 
 - **No arguments**: ask all three in one `AskUserQuestion` call. Whose PRs is
-  multi-select with `All` as its first option.
+  multi-select with `All` as its first option. Where that tool is unavailable
+  (a headless run), ask the same three questions in the reply and stop.
+- **Never assume whose PRs.** Do not pick a default and plan merges on it; the
+  scope is the user's to give.
 - **Arguments given**: they are the answer. A missing state means ready only and
   a missing bypass means off; ask only if whose PRs is missing.
 
