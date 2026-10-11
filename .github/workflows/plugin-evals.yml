@@ -77,7 +77,7 @@ jobs:
           PLUGINS: ${{ steps.pick.outputs.plugins }}
           ABLATION: ${{ inputs.baseline && 'with-without' || 'none' }}
         # GitHub tokens are single-use at the exchange (jti), and one eval fires parallel
-        # judge calls, so each case gets its own exchange and runs on the minted token.
+        # judge calls, so each case gets its own exchange; its runs (-j 3) share the minted token.
         run: |
           unset ANTHROPIC_API_KEY
           exchange() {
@@ -99,7 +99,7 @@ jobs:
               token=$(exchange) || { echo "::error::token exchange failed for $p/$c"; status=1; continue; }
               echo "::add-mask::$token"
               env -u ANTHROPIC_FEDERATION_RULE_ID -u ANTHROPIC_SERVICE_ACCOUNT_ID ANTHROPIC_AUTH_TOKEN="$token" \
-                claude plugin eval "plugins/$p" --case "$c" --trust-plugin --no-publish \
+                claude plugin eval "plugins/$p" --case "$c" -j 3 --trust-plugin --no-publish \
                   --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
                   --threshold 0.8 --max-cost-usd 1 --ablation "$ABLATION" \
                   --json "eval-results/$p--$c.json" || status=1
