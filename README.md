@@ -12,6 +12,8 @@ Personal development standards that auto-apply based on context.
 |---|---|
 | `git-workflow` | Creating branches, commits, or pull requests |
 
+Also a `SessionStart` hook that pulls every installed marketplace, working around `/reload-plugins` fetching without pulling ([claude-code#26744](https://github.com/anthropics/claude-code/issues/26744)).
+
 ### quality
 
 Quality tools. Every skill auto-applies when its description matches, and can also
@@ -32,12 +34,13 @@ be invoked explicitly with the slash command shown below.
 
 ### github-tools
 
-GitHub tools for the parts of GitHub that have no comfortable CLI.
+GitHub tools for the parts of GitHub that have no comfortable CLI. A `PreToolUse` hook enforces the `upload` skill's constraints (file type checked against content, every upload logged to `~/.claude/github-tools-uploads.jsonl`).
 
 | Skill | Auto-applies when... |
 |---|---|
 | `upload` | Attaching images or video to a GitHub PR or issue from the command line |
-| `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, and the first sync |
+| `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, the first sync, the traps found rolling it out (version pin, dot-repos, ruleset merging, paywalls), and verifying a sync against the live state |
+| `merge-ready` | Only when invoked (`/github-tools:merge-ready [all\|bots\|mine\|others]`) — merges open PRs one at a time, each only when checks are green, it is conflict-free and up to date, and its title and body still match the branch; handles stacked and bot PRs |
 | `renovate-automerge` | Bringing a repo or org onto gated Renovate auto-merge — required checks first, then `platformAutomerge: true`; audit script, checklist and the traps found rolling it out across five orgs |
 
 ### cad-tools
@@ -73,11 +76,11 @@ Linux only: it reads `/proc/meminfo` and `ps`. A hook that throws is skipped by 
 ### 2. Install plugins
 
 ```
-/plugin install dev-standards@claude-plugins
-/plugin install quality@claude-plugins
-/plugin install github-tools@claude-plugins
-/plugin install cad-tools@claude-plugins
-/plugin install ram-guard@claude-plugins
+/plugin install dev-standards@jimisola-plugins
+/plugin install quality@jimisola-plugins
+/plugin install github-tools@jimisola-plugins
+/plugin install cad-tools@jimisola-plugins
+/plugin install ram-guard@jimisola-plugins
 ```
 
 Or use the interactive UI: `/plugin` → **Discover** tab → select plugins and choose scope (user / project / local).
@@ -87,11 +90,11 @@ Or use the interactive UI: `/plugin` → **Discover** tab → select plugins and
 To refresh plugin listings after upstream changes:
 
 ```
-/plugin marketplace update claude-plugins
+/plugin marketplace update jimisola-plugins
 ```
 
 ## Local Testing
 
 ```bash
-claude --plugin-dir ./plugins/dev-standards --plugin-dir ./plugins/quality-tools --plugin-dir ./plugins/github-tools --plugin-dir ./plugins/cad-tools
+claude --plugin-dir ./plugins/dev-standards --plugin-dir ./plugins/quality-tools --plugin-dir ./plugins/github-tools --plugin-dir ./plugins/cad-tools --plugin-dir ./plugins/ram-guard
 ```
