@@ -37,7 +37,7 @@ GitHub tools for the parts of GitHub that have no comfortable CLI.
 | Skill | Auto-applies when... |
 |---|---|
 | `upload` | Attaching images or video to a GitHub PR or issue from the command line |
-| `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, and the first sync |
+| `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, the first sync, the traps found rolling it out (version pin, dot-repos, ruleset merging, paywalls), and verifying a sync against the live state |
 | `renovate-automerge` | Bringing a repo or org onto gated Renovate auto-merge — required checks first, then `platformAutomerge: true`; audit script, checklist and the traps found rolling it out across five orgs |
 
 ### cad-tools
