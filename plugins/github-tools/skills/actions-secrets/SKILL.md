@@ -68,8 +68,11 @@ each step, GitHub App keys and third-party tokens:
 ## Handling the value
 
 - **The agent never sees a third-party token.** The user runs
-  `! gh secret set NAME --env ENV -R OWNER/REPO` and pastes at the hidden prompt. Never
-  `--body` with a literal: it lands in shell history and the transcript.
+  `gh secret set NAME --env ENV -R OWNER/REPO` in their own terminal, outside Claude Code,
+  and pastes at the hidden prompt. Never via `!`: with no TTY it silently stores an empty
+  secret. Never `--body` with a literal: it lands in shell history and the transcript.
+- **A secret listed is not a secret proven.** `gh secret list` timestamps cannot show the
+  value is right; only a run of the job that uses it can.
 - **A GitHub App key goes from the download straight into `gh secret set` on stdin**, then
   the file is shredded. App keys are generated in the App's settings page only — there is
   no API — so that step is the user's.

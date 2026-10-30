@@ -78,17 +78,20 @@ Nothing can read a secret back, from the UI or the API. Moving one means issuing
 
 The agent never handles the value. Prefer issuing a **new** token scoped as narrowly as the
 registry allows (one package, publish only), so the old one can be revoked rather than
-shared between two stores. The user runs, at the Claude Code prompt or in their own terminal:
+shared between two stores. The user runs this **in their own terminal, outside Claude Code**,
+and pastes at the hidden prompt:
 
 ```
-! gh secret set NAME --env ENV -R OWNER/REPO
+gh secret set NAME --env ENV -R OWNER/REPO
 ```
 
-and pastes at the hidden prompt. Then confirm the timestamp moved:
+Not through Claude Code's `!`: it has no TTY, so `gh` reads empty stdin and stores an empty
+secret, silently. An empty environment secret overrides the repository secret of the same
+name, so the job breaks.
 
-```bash
-gh secret list --env ENV -R OWNER/REPO
-```
+When the user says it is done, `gh secret list --env ENV -R OWNER/REPO` shows the secret
+exists, but its timestamp cannot show the value is right. The proof is a run of the job that
+uses it (step 4).
 
 ## 3. Remove the repository secret
 
