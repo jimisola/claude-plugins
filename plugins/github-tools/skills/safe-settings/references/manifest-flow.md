@@ -41,8 +41,11 @@ exists: generate a private key from its settings page by hand rather than creati
 
 ```bash
 gh variable set SAFE_SETTINGS_APP_ID -R <org>/.github -b "$(jq -r .id app-conversion.json)"
-jq -r .pem app-conversion.json | gh secret set SAFE_SETTINGS_PRIVATE_KEY -R <org>/.github
+jq -r .pem app-conversion.json | gh secret set SAFE_SETTINGS_PRIVATE_KEY --env safe-settings -R <org>/.github
 ```
+
+The `safe-settings` environment must already exist, limited to `main` — see
+[repo-layout.md](repo-layout.md#the-workflow).
 
 Installing is the one step with no API: open `<html_url>/installations/new` and choose
 **All repositories**.

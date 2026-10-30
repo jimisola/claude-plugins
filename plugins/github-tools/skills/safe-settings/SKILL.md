@@ -31,10 +31,14 @@ habit.
    `scripts/app-manifest-flow.py`.
 4. **Install it on _All repositories_.** safe-settings enumerates the org; a repo outside
    the installation is silently unmanaged.
-5. **Wire the credentials** on the admin repo:
-   variable `SAFE_SETTINGS_APP_ID`, secret `SAFE_SETTINGS_PRIVATE_KEY` (the whole `.pem`,
-   `BEGIN`/`END` lines included). `gh variable set` / `gh secret set` do both without a
-   browser.
+5. **Wire the credentials** on the admin repo: variable `SAFE_SETTINGS_APP_ID`, and
+   `SAFE_SETTINGS_PRIVATE_KEY` (the whole `.pem`, `BEGIN`/`END` lines included) as an
+   **environment secret** of a `safe-settings` environment limited to `main`, with no
+   reviewers (the cron would stall). The key administers every repo in the org, so it must
+   not be a repository secret that any branch's workflow can read. Create the environment
+   by API before the first run and declare it in `repos/.github.yml` in the same PR as the
+   workflow's `environment:` — the environments plugin deletes undeclared environments,
+   secret included. The `actions-secrets` skill has the why and the commands.
 6. **Shred the local `.pem` and the manifest-conversion JSON** once the secret is set. The
    conversion response also contains the client secret and the webhook secret. A new key is
    one click away; a leaked one is not recallable.

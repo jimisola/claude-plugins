@@ -16,9 +16,11 @@ with a different schema, and keeping both is how an org ends up with two competi
 └── safe-settings/
     ├── settings.yml            # org-wide repo defaults AND the label set
     ├── deployment-settings.yml # scope: which repos are excluded
-    └── suborgs/
-        ├── product.yml         # the repos with real CI: rulesets, environments
-        └── meta.yml            # the repos without it: no required status checks
+    ├── suborgs/
+    │   ├── product.yml         # the repos with real CI: rulesets, environments
+    │   └── meta.yml            # the repos without it: no required status checks
+    └── repos/
+        └── .github.yml         # the admin repo's own `safe-settings` environment
 ```
 
 Split the suborgs by *what CI a repo actually has*, not by what the repos are. A required
@@ -57,6 +59,30 @@ Checks out the admin repo and `github/safe-settings` at a pinned tag, `npm ci`, 
 Triggers: push to `main` limited to `safe-settings/**`, a weekly cron for drift correction,
 and `workflow_dispatch` with a boolean `nop` input.
 
+The sync job declares `environment: safe-settings`, and `SAFE_SETTINGS_PRIVATE_KEY` is a
+secret of that environment, not of the repo: the key administers every repo in the org, and
+a repository secret is readable by any workflow a branch adds. Create the environment before
+the first run — safe-settings cannot, it needs the key to start — and declare the same thing
+in `repos/.github.yml`, or the first sync deletes it with the key inside:
+
+```bash
+gh api -X PUT repos/<org>/.github/environments/safe-settings --input - <<'EOF'
+{"deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true}}
+EOF
+gh api -X POST repos/<org>/.github/environments/safe-settings/deployment-branch-policies -f name=main -f type=branch
+```
+
+```yaml
+# safe-settings/repos/.github.yml
+environments:
+  - name: safe-settings
+    deployment_branch_policy:
+      protected_branches: false
+      custom_branch_policies: [main]
+```
+
+No reviewers: the cron would wait for an approval nobody gives.
+
 `FULL_SYNC_NOP` is the *only* preview knob — there is no `DRY_RUN` variable, and a workflow
 setting one is doing nothing while looking careful. In 2.1.18 the NOP path crashes anyway
 (`lib/settings.js` dereferences `y.action.additions` before the `undefined` guard below it),
@@ -93,7 +119,7 @@ Order matters, and each step is verified before the next:
 2. Move `safe-settings/`, the workflow (`ADMIN_REPO` changed) and the README sections into
    the public `.github`. Keep the old repo in `restrictedRepos.exclude`, reason rewritten
    to "archived". Set `SAFE_SETTINGS_APP_ID` (a variable) and a **new** private key on the
-   new home — a GitHub App holds several keys at once, so nothing stops syncing in between;
+   new home, as the `safe-settings` environment secret — a GitHub App holds several keys at once, so nothing stops syncing in between;
    delete the old key afterwards.
 3. First sync from the new home must be green; then the set diff on every repo.
 4. Archive or delete the old repo **before its next scheduled run**: both repos now carry
