@@ -42,6 +42,7 @@ GitHub tools for the parts of GitHub that have no comfortable CLI. A `PreToolUse
 | `safe-settings` | Setting up, fixing or debugging `github/safe-settings` for an org — App registration via the manifest flow, wiring, the first sync, the traps found rolling it out (version pin, dot-repos, ruleset merging, paywalls), and verifying a sync against the live state |
 | `merge-ready` | Only when invoked (`/github-tools:merge-ready [all\|bots\|mine\|others]`) — merges open PRs one at a time, each only when checks are green, it is conflict-free and up to date, and its title and body still match the branch; handles stacked and bot PRs |
 | `renovate-automerge` | Bringing a repo or org onto gated Renovate auto-merge — required checks first, then `platformAutomerge: true`; audit script, checklist and the traps found rolling it out across five orgs |
+| `actions-secrets` | Creating, moving or auditing an Actions secret, a GitHub App key for a workflow, or publishing credentials — environment secrets behind a branch/tag policy instead of repository secrets any branch can read, declared in safe-settings, re-issued rather than copied; read-only audit that grades exposure honestly |
 
 ### cad-tools
 

@@ -1,6 +1,6 @@
 {
   "name": "github-tools",
-  "description": "GitHub tools \u2014 attach images and video to PRs and issues from the command line, merge pull requests once they are genuinely ready, run an org on safe-settings, and bring repos onto gated Renovate auto-merge.",
+  "description": "GitHub tools \u2014 attach images and video to PRs and issues from the command line, merge pull requests once they are genuinely ready, run an org on safe-settings, bring repos onto gated Renovate auto-merge, and keep Actions secrets in environments only their refs can reach.",
   "version": "1.6.3",
   "author": {
     "name": "jimisola"
@@ -9,6 +9,7 @@
     "./skills/upload/",
     "./skills/safe-settings/",
     "./skills/merge-ready/",
-    "./skills/renovate-automerge/"
+    "./skills/renovate-automerge/",
+    "./skills/actions-secrets/"
   ]
 }
