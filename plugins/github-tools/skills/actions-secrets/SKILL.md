@@ -76,8 +76,9 @@ each step, GitHub App keys and third-party tokens:
 - **Never write a secret into the working tree**, not even a gitignored path. This is the
   user's global rule — *Secrets never live in a repo* in `~/.claude/CLAUDE.md` — follow it
   as written there.
-- **Revoke the old App key only after every holder has the new one.** One App key is often
-  set in several repos; the audit finds them.
+- **Revoke the old App key only after the test run and after every holder has the new
+  one** — on the settings page, the key whose fingerprint is not the new key's. One App key
+  is often set in several repos; the audit finds them.
 
 ## Auditing
 

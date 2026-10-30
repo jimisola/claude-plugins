@@ -60,7 +60,8 @@ Nothing can read a secret back, from the UI or the API. Moving one means issuing
    `https://github.com/settings/apps/SLUG` for a user-owned App). There is no API for this.
    The browser downloads a `.pem`.
 2. Record its fingerprint, pipe it into the secret, shred it — the file never moves into a
-   repo, not even briefly:
+   repo, not even briefly. The `openssl` line is GitHub's documented check and prints the
+   value the settings page shows after `SHA256:`:
 
    ```bash
    pem=~/Downloads/SLUG.YYYY-MM-DD.private-key.pem
