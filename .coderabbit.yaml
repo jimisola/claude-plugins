@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Repository overrides. Everything else comes from the central config
+# (<owner>/coderabbit) via `inheritance: true`.
+# https://docs.coderabbit.ai/configuration/central-configuration
+inheritance: true
+
+reviews:
+  path_instructions:
+    - path: "plugins/**/SKILL.md"
+      instructions: >-
+        Needs YAML frontmatter with name and description; the description must
+        name its trigger conditions. Keep it concise and free of code blocks;
+        detail belongs in references/.
